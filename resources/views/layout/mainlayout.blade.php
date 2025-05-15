@@ -93,6 +93,14 @@
         </li>
       </ul>
     </div>
+            @php
+            $user = session('username');
+        @endphp
+        @if($user)
+          <span class="navbar-text text-light me-3">
+            Hi, {{ $user }}
+          </span>
+        @endif
                 <form action="{{ route('logout') }}" method="POST" class="d-inline">
             @csrf
             <button class="btn btn-outline-light nav-link me-auto" 

@@ -25,7 +25,7 @@
         <div class="row mb-3" style="font-size: 12px;">
             <label for="Kode_pelanggan" class="col-sm-2 col-form-label col-form-label-sm">Kode Pelanggan:</label>
             <div class="col-sm-3">
-                <input type="text" id="Kode_pelanggan" name="kode_pelanggan" class="form-control" readonly>
+            <input type="text" id="Kode_pelanggan" name="kode_pelanggan" class="form-control" readonly>
             </div>
             <label for="created_at colFormLabelSm" class="col-sm-2 col-form-label col-form-label-sm">Tanggal:</label>
             <div class="col-sm-3">

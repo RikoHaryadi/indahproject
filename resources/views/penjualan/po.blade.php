@@ -11,43 +11,60 @@
     <h1>Form Penjualan</h1>
     <form id="penjualan-form" method="POST" action="{{ route('po.store') }}">
     @csrf
+      {{-- Pilih Sales --}}
+    <div class="row mb-3">
+      <label class="col-sm-2 col-form-label">Kode Sales:</label>
+      <div class="col-sm-3">
+        <select id="kode_sales" name="kode_sales" class="form-control" @if($userLevel==1) disabled @endif>
+          <option value="" disabled {{ $userLevel!=1?'selected':'' }}>Pilih Sales</option>
+          @foreach($salesmanList as $s)
+            <option 
+              value="{{ $s->kode_sales }}" 
+              data-nama="{{ $s->nama_salesman }}"
+              {{ $userLevel==1 && $s->kode_sales==$userSales ? 'selected' : '' }}>
+              {{ $s->kode_sales }} – {{ $s->nama_salesman }}
+            </option>
+          @endforeach
+        </select>
+      </div>
+      <label class="col-sm-2 col-form-label">Nama Salesman:</label>
+      <div class="col-sm-3">
+        <input type="text" id="nama_salesman" class="form-control" readonly>
+      </div>
+    </div>
+
+ 
     <div class="row mb-3">
         <label for="created_at colFormLabelSm" class="col-sm-2 col-form-label col-form-label-sm">Tanggal Transaksi</label>
         <div class="col-sm-3">
         <input type="date" id="created_at" name="created_at" class="form-control" value="{{ date('Y-m-d') }}" required>
         </div>
     </div>
+{{-- Pilih Pelanggan --}}
     <div class="row mb-3">
-    <label for="Kode_pelanggan" class="col-sm-2 col-form-label col-form-label-sm">Pilih Pelanggan:</label>
-    <div class="col-sm-3">
-    <div>
-        <select class="form-control kode-pelanggan-select">
-                    <option value="">Pilih Pelanggan</option>
+      <label class="col-sm-2 col-form-label">Pelanggan:</label>
+      <div class="col-sm-3">
+        <select id="kode_pelanggan" name="kode_pelanggan" class="form-control">
+          <option value="" disabled selected>Pilih Pelanggan</option>
         </select>
-     </div>
-     <input type="hidden" name="kode_pelanggan" id="Kode_pelanggan">  {{-- Tambahkan ini --}}
+      </div>
+      <label class="col-sm-2 col-form-label">Nama Pelanggan:</label>
+      <div class="col-sm-3">
+        <input type="text" id="nama_pelanggan" name="nama_pelanggan" class="form-control" readonly>
+      </div>
     </div>
-</div>
 
-
-<div class="row mb-3">
-    <label for="Nama_pelanggan" class="col-sm-2 col-form-label col-form-label-sm">Nama Pelanggan</label>
-    <div class="col-sm-10">
-        <input type="text" name="nama_pelanggan" id="Nama_pelanggan" class="form-control" readonly>
-    </div>    
-</div>
-<div class="row mb-3">
-    <label for="alamat" class="col-sm-2 col-form-label col-form-label-sm">Alamat</label>
-    <div class="col-sm-10">
-        <input type="text" name="alamat" id="alamat" class="form-control" readonly>
-    </div>  
-</div>
-<div class="row mb-3">
-    <label for="telepon" class="col-sm-2 col-form-label col-form-label-sm">Telepon</label>
-    <div class="col-sm-10">
-        <input type="text" name="telepon" id="telepon" class="form-control" readonly>
-    </div>    
-</div>
+    {{-- Alamat & Telepon --}}
+    <div class="row mb-3">
+      <label class="col-sm-2 col-form-label">Alamat:</label>
+      <div class="col-sm-3">
+        <input type="text" id="alamat" class="form-control" readonly>
+      </div>
+      <label class="col-sm-2 col-form-label">Telepon:</label>
+      <div class="col-sm-3">
+        <input type="text" id="telepon" class="form-control" readonly>
+      </div>
+    </div>
 
     <div id="items-container">
         <h3>Items</h3>
@@ -87,28 +104,86 @@
    
 </form>
 </div>
-<!-- Skrip Custom -->
-<!--  -->
-<script>
- 
+{{-- JS --}}
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
-    // Update detail pelanggan saat dipilih
-    $('#Kode_pelanggan').on('change', function() {
-        let selectedOption = $(this).find('option:selected');
-        $('#Nama_pelanggan').val(selectedOption.data('nama') || '');
-        $('#alamat').val(selectedOption.data('alamat') || '');
-        $('#telepon').val(selectedOption.data('telepon') || '');
+<script>
+$(function(){
+  // 1) Fungsi isi nama_salesman
+  function fillSalesman(){
+    const nama = $('#kode_sales option:selected').data('nama') || '';
+    $('#nama_salesman').val(nama);
+  }
+  fillSalesman();
+
+  // 2) On change kode_sales → AJAX load pelanggan
+  $('#kode_sales').on('change', function(){
+    fillSalesman();
+
+    const kode = $(this).val();
+    $('#kode_pelanggan').html('<option disabled>Loading…</option>');
+    $('#nama_pelanggan, #alamat, #telepon').val('');
+
+    $.getJSON('{{ route("pelanggan.search") }}', { salesman: kode }, function(data){
+      let opts = '<option value="" disabled selected>Pilih Pelanggan</option>';
+      data.forEach(p => {
+        opts += `<option 
+          value="${p.Kode_pelanggan}"
+          data-nama="${p.Nama_pelanggan}"
+          data-alamat="${p.alamat}"
+          data-telepon="${p.telepon}">
+          ${p.Kode_pelanggan} – ${p.Nama_pelanggan}
+        </option>`;
+      });
+      $('#kode_pelanggan').html(opts);
     });
+  });
 
+  // 3) Jika user sales, trigger sekali agar dropdown langsung terisi
+  @if($userLevel == 1)
+    $('#kode_sales').trigger('change');
+  @endif
 
-</script>
+  // 4) On change pelanggan → isi nama, alamat, telepon
+  $('#kode_pelanggan').on('change', function(){
+    const $o = $(this).find('option:selected');
+    $('#nama_pelanggan').val($o.data('nama')    || '');
+    $('#alamat').val($o.data('alamat')          || '');
+    $('#telepon').val($o.data('telepon')        || '');
+  });
+});
 
-<script>
-
-
+function initializeSelect2() {
+    $('.kode-barang-select').select2({
+      placeholder: 'Cari kode barang…',
+      ajax: {
+        url: '/masterbarang/search',
+        dataType: 'json',
+        delay: 250,
+        data: params => ({ q: params.term }),
+        processResults: data => ({
+          results: data.map(item => ({
+            id: item.kode_barang,
+            text: `${item.kode_barang} – ${item.nama_barang}`,
+            nama_barang: item.nama_barang,
+            harga: item.hargapcsjual,
+            isidus: item.isidus
+          }))
+        }),
+        cache: true
+      }
+    }).off('select2:select')
+      .on('select2:select', function(e) {
+        const d = e.params.data, idx = $(this).data('index');
+        $(`input[name="items[${idx}][nama_barang]"]`).val(d.nama_barang);
+        $(`input[name="items[${idx}][harga]"]`).val(d.harga);
+        $(`input[name="items[${idx}][isidus]"]`).val(d.isidus);
+      });
+  }
 // Tambah item baru
 function addNewItem() {
-    let lastRow = $('#items-body tr:last-child');
+      let lastRow = $('#items-body tr:last-child');
 
     // Cek apakah pengguna sudah memilih kode barang di baris terakhir sebelum menambahkan item baru
     if (lastRow.length > 0 && lastRow.find('.kode-barang-select').val() === '') {
@@ -122,7 +197,8 @@ function addNewItem() {
     
     const row = `
     <tr>
-        <td class="kode-barang-column">
+    <td class="kode-barang-column">
+    
             <select name="items[${index}][kode_barang]" class="form-control kode-barang-select" data-index="${index}" style="width: 100%; font-size: 10px;">
                 <option value="">Pilih Barang</option>
             </select>
@@ -138,13 +214,15 @@ function addNewItem() {
         <td><input type="number" name="items[${index}][jumlah]" class="form-control" readonly style="font-size: 10px;"></td>
         <td><button type="button" class="btn btn-danger" onclick="deleteRow(this)">Hapus</button></td>
     </tr>`;
+$('#items-body').append(row);
 
-    document.getElementById('items-body').insertAdjacentHTML('beforeend', row);
 
     // Inisialisasi Select2 untuk dropdown barang yang baru ditambahkan
     initializeSelect2();
 }
-
+ $(document).ready(() => {
+    initializeSelect2();
+  });
 
 // Fungsi untuk inisialisasi select2 setelah elemen baru ditambahkan
 function initializeSelect2() {
@@ -181,38 +259,51 @@ function initializeSelect2() {
 
     // Inisialisasi Select2 untuk kode barang
     $('.kode-barang-select').select2({
-        placeholder: 'Cari kode barang atau nama...',
-        ajax: {
-            url: '/barang/search', 
-            dataType: 'json',
-            delay: 250,
-            data: function (params) {
-                return { q: params.term };
-            },
-            processResults: function (data) {
-                return {
-                    results: data.map(item => ({
-                        id: item.kode_barang,
-                        text: `${item.kode_barang} - ${item.nama_barang}`,
-                        nama_barang: item.nama_barang,
-                        harga: item.harga,
-                        isidus: item.isidus
-                        // stok: item.stok
-                    }))
-                };
-            },
-            cache: true
-        }
-    }).on('select2:select', function (e) {
-        const data = e.params.data;
-        const index = $(this).data('index');
+    placeholder: 'Cari kode barang atau nama...',
+    ajax: {
+      url: '/masterbarang/search',
+      dataType: 'json',
+      delay: 250,
+      data: params => ({ q: params.term }),
+      processResults: data => ({
+        results: data.map(item => ({
+          id: item.kode_barang,
+          text: `${item.kode_barang} – ${item.nama_barang}`,
+          nama_barang: item.nama_barang,
+          harga: item.hargapcsjual,
+          isidus: item.isidus
+        }))
+      }),
+      cache: true
+    }
+  })
+  .off('select2:select')         // Hapus listener lama, kalau ada
+  .on('select2:select', function(e) {
+    const $this = $(this);
+    const kode  = e.params.data.id;
 
-        // Isi otomatis kolom terkait
-        $(`input[name="items[${index}][nama_barang]"]`).val(data.nama_barang);
-        $(`input[name="items[${index}][harga]"]`).val(data.harga);
-        $(`input[name="items[${index}][isidus]"]`).val(data.isidus);
-        $(`input[name="items[${index}][stok]"]`).val(data.stok);
+    // Cek duplikat
+    let dup = false;
+    $('.kode-barang-select').not($this).each(function() {
+      if ($(this).val() === kode) {
+        dup = true;
+        return false;
+      }
     });
+
+    if (dup) {
+      alert('Kode barang ini sudah ada di baris sebelumnya! Silakan pilih kode barang lain.');
+      // Reset hanya Select2-nya
+      $this.val(null).trigger('change.select2');
+      return;
+    }
+
+    // Tidak duplikat: isi otomatis nama, harga, isidus
+    const idx = $this.data('index');
+    $(`input[name="items[${idx}][nama_barang]"]`).val(e.params.data.nama_barang);
+    $(`input[name="items[${idx}][harga]"]`).val(e.params.data.harga);
+    $(`input[name="items[${idx}][isidus]"]`).val(e.params.data.isidus);
+  });
 }
 
 
@@ -221,31 +312,33 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 $(document).ready(function() {
-    $(document).on('change', '.kode-barang-select', function() {
-        let selectedKodeBarang = $(this).val();
-        let isDuplicate = false;
+//   $(document).on('change', '.kode-barang-select', function() {
+//     let selectedKodeBarang = $(this).val();
+//     let isDuplicate = false;
 
-        // Cek apakah kode barang sudah dipilih di baris sebelumnya
-        $('.kode-barang-select').each(function() {
-            if ($(this).val() === selectedKodeBarang && $(this)[0] !== event.target) {
-                isDuplicate = true;
-                return false; // Hentikan loop jika ditemukan duplikat
-            }
-        });
+//     $('.kode-barang-select').each(function() {
+//         if ($(this).val() === selectedKodeBarang && this !== event.target) {
+//             isDuplicate = true;
+//             return false;
+//         }
+//     });
 
-        if (isDuplicate) {
-            alert('Kode barang ini sudah ada di baris sebelumnya! Silakan pilih kode barang lain.');
-            $(this).val('').trigger('change'); // Reset pilihan jika duplikat
-        } else {
-            // Isi otomatis kolom terkait jika tidak duplikat
-            const data = $(this).select2('data')[0];
-            let currentRow = $(this).closest('tr');
+//     if (isDuplicate) {
+//         alert('Kode barang ini sudah ada di baris sebelumnya! Silakan pilih kode barang lain.');
+//         // Reset tanpa memicu handler ulang:
+//         $(this).val(null).trigger('change.select2');
+//         return;  // hentikan eksekusi handler
+    
+//         } else {
+//             // Isi otomatis kolom terkait jika tidak duplikat
+//             const data = $(this).select2('data')[0];
+//             let currentRow = $(this).closest('tr');
 
-            currentRow.find('input[name$="[nama_barang]"]').val(data.nama_barang);
-            currentRow.find('input[name$="[harga]"]').val(data.harga);
-            currentRow.find('input[name$="[isidus]"]').val(data.isidus);
-        }
-    });
+//             currentRow.find('input[name$="[nama_barang]"]').val(data.nama_barang);
+//             currentRow.find('input[name$="[harga]"]').val(data.harga);
+//             currentRow.find('input[name$="[isidus]"]').val(data.isidus);
+//         }
+//     });
 });
 
 
@@ -279,11 +372,12 @@ document.getElementById('items-body').addEventListener('click', function (event)
         calculateTotal(); // Recalculate total after deletion
     }
 });
-function updatePelangganDetails() {
-            const selectedOption = document.querySelector('#Kode_pelanggan option:checked');
-            document.getElementById('Nama_pelanggan').value = selectedOption.dataset.nama || '';
-            document.getElementById('alamat').value = selectedOption.dataset.alamat || '';
-            document.getElementById('telepon').value = selectedOption.dataset.telepon || '';
+
+        function updateSalesmanDetails(selectElement) {
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+        if (selectedOption) {
+            document.getElementById('nama_salesman').value = selectedOption.dataset.nama1 || '';
+        }
     }
     // Update detail barang saat kode barang dipilih
     function updateBarangDetails(selectElement) {
@@ -417,3 +511,7 @@ function deleteRow(button) {
     }
 </style>
 @endsection
+@push('styles')
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" 
+      rel="stylesheet" />
+@endpush

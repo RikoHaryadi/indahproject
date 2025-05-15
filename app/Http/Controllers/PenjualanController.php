@@ -10,6 +10,7 @@ use App\Models\Barang;
 use App\Models\Grn;
 use App\Models\Po;
 use App\Models\PoDetail;
+use App\Models\Salesman;
 use PDF;
 
 class PenjualanController extends Controller
@@ -20,7 +21,8 @@ class PenjualanController extends Controller
         $pelangganList = Pelanggan::all(); // Ambil daftar pelanggan
         $barangList = Barang::all(); // Ambil daftar pelanggan
         $poList = Po::all(); // Atau filter sesuai kebutuhan
-        return view('penjualan.index', compact('penjualan', 'pelangganList', 'barangList', 'poList')); // Kirim data ke view
+        $salesmanList = Salesman::all(); // Atau filter sesuai kebutuhan
+        return view('penjualan.index', compact('penjualan', 'pelangganList', 'barangList', 'poList', 'salesmanList')); // Kirim data ke view
     }
 
     public function store(Request $request)

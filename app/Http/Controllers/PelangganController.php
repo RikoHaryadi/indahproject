@@ -82,15 +82,9 @@ public function store(Request $request)
         return redirect()->route('pelanggan.index')->with('success', 'Pelanggan berhasil ditambahkan!');
     }
 
-    public function search(Request $request)
-{
-    $search = $request->q;
-
-    $pelanggan = Pelanggan::where('Kode_pelanggan', 'LIKE', "%{$search}%")
-        ->orWhere('Nama_pelanggan', 'LIKE', "%{$search}%")
-        ->limit(10)
-        ->get();
-
+public function search(Request $r) {
+    $sales = $r->get('salesman');
+    $pelanggan = Pelanggan::where('kode_sales', $sales)->get();
     return response()->json($pelanggan);
 }
 

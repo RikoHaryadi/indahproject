@@ -176,7 +176,17 @@ class MasterBarangController extends Controller
         ->with('error', 'Gagal membuka file CSV.');
 }
 
+public function search(Request $request)
+{
+    $search = $request->q;
 
+    $masterbarang = MasterBarang::where('kode_barang', 'LIKE', "%{$search}%")
+        ->orWhere('nama_barang', 'LIKE', "%{$search}%")
+        ->limit(10)
+        ->get();
+
+    return response()->json($masterbarang);
+}
   
 }
 

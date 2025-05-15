@@ -147,7 +147,7 @@ input[type=submit]:hover{
       <input type="password" placeholder="password" name="password" id="password" required>
       <input type="submit" value="Login">
        <hr>
-          <div class="crtacc"><a href="#">Create Account</a></div>
+          <div class="crtacc"><a href="/register">Create Account</a></div>
     </form>
   </div>
   <!--  <div class="wrapper animated bounce">

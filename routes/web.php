@@ -35,157 +35,131 @@ use App\Http\Controllers\PiutangController;
 //     return view('home');
 // });
 
-Route::middleware('no.cache')->group(function () {
-    Route::get('/login', [AuthController::class, 'showLoginForm'])
-         ->name('login');
-    Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/logout', [AuthController::class, 'logout'])
-         ->name('logout');
+// Public (no cache)
+Route::middleware('no.cache')->group(function(){
+    // login, register, logout
+    Route::get('/login',  [AuthController::class,'showLoginForm'])->name('login');
+    Route::post('/login', [AuthController::class,'login']);
+    Route::post('/logout',[AuthController::class,'logout'])->name('logout');
+    Route::get('/register', [AuthController::class,'showRegister'])->name('register');
+    Route::post('/register',[AuthController::class,'register'])->name('register.post');
 });
 
-/*
-|--------------------------------------------------------------------------
-| Protected Routes — session.auth + no-cache
-|--------------------------------------------------------------------------
-*/
-Route::middleware(['session.auth', 'no.cache'])->group(function () {
+// Protected (login + no cache)
+Route::middleware(['session.auth','no.cache'])->group(function () {
     // Dashboard
-    Route::get('/', [DashboardController::class, 'index'])
-         ->name('home');
+    Route::get('/', [DashboardController::class,'index'])->name('home');
 
-    // Penjualan
-    Route::get('/penjualan', [PenjualanController::class, 'index'])
-         ->name('penjualan.index');
-    Route::post('/penjualan', [PenjualanController::class, 'store'])
-         ->name('penjualan.store');
-    Route::get('/penjualan/daftarso', [PoController::class, 'daftar'])
-         ->name('penjualan.daftarso');
-    Route::get('/penjualan/daftar', [PenjualanController::class, 'daftar'])
-         ->name('penjualan.daftarjual');
-    Route::get('/penjualan/{id}/cetak', [PenjualanController::class, 'cetak'])
-         ->name('penjualan.cetak');
-    Route::get('/penjualan/cetak-pdf/{id}', [PenjualanController::class, 'cetakPdf'])
-         ->name('penjualan.cetak-pdf');
+    // ---------------------------
+    // Sales-only (level = 1)
+    // ---------------------------
+    Route::middleware('level:1')->group(function () {
+             
+               // PO (Sales Order)
+               Route::get('/po',          [PoController::class,'index'])->name('po.index');
+               Route::post('/po',         [PoController::class,'store'])->name('po.store');
+               Route::get('/api/po/{id}', [PoController::class,'getPOData']);
+               Route::get('/po/{id}',     [PoController::class,'show'])->name('po.show');
+               Route::get('/penjualan/daftarso',      [PoController::class,'daftar'])->name('penjualan.daftarso');
 
-    // Sales Order (PO)
-    Route::get('/po', [PoController::class, 'index'])
-         ->name('po.index');
-    Route::post('/po', [PoController::class, 'store'])
-         ->name('po.store');
-    Route::get('/api/po/{id}', [PoController::class, 'getPOData']);
-    Route::get('/po/{id}', [PoController::class, 'show'])
-         ->name('po.show');
+               // (Optional) jika masih pakai wizard select‐sales
+               Route::get('/po/select-sales',       [PoController::class,'selectSales'])->name('po.select-sales');
+               Route::post('/po/select-sales',      [PoController::class,'handleSelectSales'])->name('po.handle-select-sales');
+               Route::get('/po/create',             [PoController::class,'create'])->name('po.create');
+               Route::get('/pelanggan/search', [PelangganController::class,'search'])->name('pelanggan.search');
+               Route::get('/masterbarang/search', [MasterBarangController::class,'search'])->name('masterbarang.search');
+               Route::resource('pelanggan', PelangganController::class)
+               ->parameters(['pelanggan'=>'Kode_pelanggan'])
+               ->except('show');
+          
+               // Route::post('/pelanggan/import', [PelangganController::class,'import'])->name('pelanggan.import');
+               Route::get('/barang',    [BarangController::class,'index'])->name('barang.index');
+    });
+     Route::middleware('level:2,3')->group(function () {
+   
+               Route::get('/po',          [PoController::class,'index'])->name('po.index');
+               Route::post('/po',         [PoController::class,'store'])->name('po.store');
+               Route::get('/api/po/{id}', [PoController::class,'getPOData']);
+                         Route::get('/po/{id}',     [PoController::class,'show'])->name('po.show');
+                    Route::get('/penjualan/daftarso',      [PoController::class,'daftar'])->name('penjualan.daftarso');
 
-    // Multiple PO Processing
-    Route::get('/so/selection', [MultiplepoController::class, 'index'])
-         ->name('po.selection');
-    Route::post('/so/process/step2', [MultiplepoController::class, 'processStep2'])
-         ->name('so.process.step2');
-    Route::post('/so/process/final', [MultiplepoController::class, 'processFinal'])
-         ->name('so.process.final');
-    Route::get('/so/list', [MultiplepoController::class, 'list'])
-         ->name('so.list');
+                    // (Optional) jika masih pakai wizard select‐sales
+                    Route::get('/po/select-sales',       [PoController::class,'selectSales'])->name('po.select-sales');
+                    Route::post('/po/select-sales',      [PoController::class,'handleSelectSales'])->name('po.handle-select-sales');
+                    Route::get('/po/create',             [PoController::class,'create'])->name('po.create');
+                    Route::get('/pelanggan/search', [PelangganController::class,'search'])->name('pelanggan.search');
+                         Route::get('/masterbarang/search', [MasterBarangController::class,'search'])->name('masterbarang.search');
+                    Route::resource('pelanggan', PelangganController::class)
+                    ->parameters(['pelanggan'=>'Kode_pelanggan'])
+                    ->except('show');
+               
+                    // Route::post('/pelanggan/import', [PelangganController::class,'import'])->name('pelanggan.import');
+                    Route::get('/barang',    [BarangController::class,'index'])->name('barang.index');
+     
+     Route::get('/penjualan',               [PenjualanController::class,'index'])->name('penjualan.index');
+     Route::post('/penjualan',              [PenjualanController::class,'store'])->name('penjualan.store');
+     Route::get('/penjualan/daftarso',      [PoController::class,'daftar'])->name('penjualan.daftarso');
+     Route::get('/penjualan/daftar',        [PenjualanController::class,'daftar'])->name('penjualan.daftarjual');
+     Route::get('/penjualan/{id}/cetak',    [PenjualanController::class,'cetak'])->name('penjualan.cetak');
+     Route::get('/penjualan/cetak-pdf/{id}',[PenjualanController::class,'cetakPdf'])->name('penjualan.cetak-pdf');
 
-    // Barang & Search
-    Route::get('/barang', [BarangController::class, 'index'])
-         ->name('barang.index');
-    Route::post('/barang', [BarangController::class, 'store'])
-         ->name('barang.store');
-    Route::get('/barang/{kode}/edit', [BarangController::class, 'edit'])
-         ->name('barang.edit');
-    Route::put('/barang/{kode}', [BarangController::class, 'update'])
-         ->name('barang.update');
-    Route::delete('/barang/{kode}', [BarangController::class, 'destroy'])
-         ->name('barang.destroy');
-    Route::get('/barang/search', [BarangController::class, 'search'])
-         ->name('barang.search');
+     // Multiple PO
+     Route::get('/so/selection',            [MultiplepoController::class,'index'])->name('po.selection');
+     Route::post('/so/process/step2',       [MultiplepoController::class,'processStep2'])->name('so.process.step2');
+     Route::post('/so/process/final',       [MultiplepoController::class,'processFinal'])->name('so.process.final');
+     Route::get('/so/list',                 [MultiplepoController::class,'list'])->name('so.list');
 
-    // Pelanggan & Import
-    Route::get('/pelanggan', [PelangganController::class, 'index'])
-         ->name('pelanggan.index');
-    Route::post('/pelanggan', [PelangganController::class, 'store'])
-         ->name('pelanggan.store');
-    Route::get('/pelanggan/{Kode_pelanggan}/edit', [PelangganController::class, 'edit'])
-         ->name('pelanggan.edit');
-    Route::put('/pelanggan/{Kode_pelanggan}', [PelangganController::class, 'update'])
-         ->name('pelanggan.update');
-    Route::delete('/pelanggan/{Kode_pelanggan}', [PelangganController::class, 'destroy'])
-         ->name('pelanggan.destroy');
-    Route::post('/pelanggan/import', [PelangganController::class, 'import'])
-         ->name('pelanggan.import');
-    Route::get('/pelanggan/search', [PelangganController::class, 'search']);
+     // Barang & MasterBarang
+     Route::resource('supplier', SupplierController::class)
+          ->parameters(['supplier'=>'Kode_suplier'])
+          ->except('show');
+     Route::resource('salesman', SalesmanController::class)->except('show');
+     Route::resource('kategori', KategoriController::class)->except('show');
+     Route::resource('masterbarang', MasterBarangController::class)
+          ->parameters(['masterbarang'=>'kode']);
+     Route::post('/masterbarang/import',    [MasterBarangController::class,'importCSV'])->name('masterbarang.import');
+     Route::get('/barang/search',           [BarangController::class,'search'])->name('barang.search');
+     Route::get('/masterbarang/search',           [MasterBarangController::class,'search'])->name('masterbarang.search');
+     Route::resource('grn', GrnController::class)
+          ->except(['edit','update','destroy']);
+     Route::get('/grn/daftar',               [GrnController::class,'daftar'])->name('grn.daftargrn');
+     Route::get('/grn/cetak/{id}',           [GrnController::class,'cetak'])->name('grn.cetak');
+     Route::get('/grn/cetak-pdf/{id}',       [GrnController::class,'cetakPdf'])->name('grn.cetak-pdf');
 
-    // Salesman
-    Route::resource('salesman', SalesmanController::class)
-         ->except(['show']);
+     // Pelanggan
+     Route::resource('pelanggan', PelangganController::class)
+          ->parameters(['pelanggan'=>'Kode_pelanggan']);
+     Route::get('/pelanggan/search',         [PelangganController::class,'search'])->name('pelanggan.search');
+     Route::post('/pelanggan/import',        [PelangganController::class,'import'])->name('pelanggan.import');
 
-    // Supplier
-    Route::resource('supplier', SupplierController::class)
-         ->parameters(['supplier' => 'Kode_suplier'])
-         ->except(['show']);
+     // Pembayaran
+     Route::get('/pembayaran',               [PembayaranController::class,'index'])->name('pembayaran.index');
+     Route::post('/pembayaran',              [PembayaranController::class,'store'])->name('pembayaran.store');
+     Route::get('/pembayaran/daftarpiutang', [PembayaranController::class,'daftar'])->name('pembayaran.daftarpiutang');
 
-    // Kategori
-    Route::resource('kategori', KategoriController::class)
-         ->except(['show']);
+     // Rekap
+     Route::get('/rekap-barang',             [RekapController::class,'rekapBarang'])->name('rekap.barang');
+     Route::get('/rekap/pilih-faktur',       [RekapController::class,'pilihFaktur'])->name('rekap.pilih-faktur');
+     Route::post('/rekap/hasil-rekap',       [RekapController::class,'prosesRekap'])->name('rekap.hasil-rekap');
+     Route::get('/rekap-faktur',             [RekapController::class,'rekapFaktur'])->name('rekap.faktur');
 
-    // Akun & Buku Besar & Biaya
-    Route::get('/kodeakun', [AkunController::class, 'index'])
-         ->name('akuntan.kodeakun');
-    Route::post('/kodeakun', [AkunController::class, 'store'])
-         ->name('kodeakun.store');
-    Route::delete('/kodeakun/{kode_akun}', [AkunController::class, 'destroy'])
-         ->name('kodeakun.destroy');
+     // Kode Akun, Buku Besar, Biaya
+     Route::get('/kodeakun',                 [AkunController::class,'index'])->name('akuntan.kodeakun');
+     Route::post('/kodeakun',                [AkunController::class,'store'])->name('kodeakun.store');
+     Route::delete('/kodeakun/{kode_akun}',  [AkunController::class,'destroy'])->name('kodeakun.destroy');
 
-    Route::get('/bukubesar', [BukubesarController::class, 'index'])
-         ->name('akuntan.bukubesar');
+     Route::get('/bukubesar',                [BukubesarController::class,'index'])->name('akuntan.bukubesar');
 
-    Route::get('/inputbiaya', [BiayaController::class, 'index'])
-         ->name('akuntan.biaya');
-    Route::post('/inputbiaya', [BiayaController::class, 'store'])
-         ->name('biaya.store');
-    Route::get('/akuntan/cetakbiaya/{kode_transaksi}', [BiayaController::class, 'cetak'])
-         ->name('akuntan.cetakbiaya');
-    Route::get('/biaya/cetak-pdf/{kode_transaksi}', [BiayaController::class, 'cetakPdf'])
-         ->name('biaya.cetak-pdf');
+     Route::get('/inputbiaya',               [BiayaController::class,'index'])->name('akuntan.biaya');
+     Route::post('/inputbiaya',              [BiayaController::class,'store'])->name('biaya.store');
+     Route::get('/akuntan/cetakbiaya/{kode}',[BiayaController::class,'cetak'])->name('akuntan.cetakbiaya');
+     Route::get('/biaya/cetak-pdf/{kode}',   [BiayaController::class,'cetakPdf'])->name('biaya.cetak-pdf');
 
-    // Master Barang & Import
-    Route::resource('masterbarang', MasterBarangController::class)
-         ->parameters(['masterbarang' => 'kode']);
-    Route::post('/masterbarang/import', [MasterBarangController::class, 'importCSV'])
-         ->name('masterbarang.import');
-
-    // GRN
-    Route::resource('grn', GrnController::class)->except(['edit','update','destroy']);
-    Route::get('/grn/daftar', [GrnController::class, 'daftar'])
-         ->name('grn.daftargrn');
-    Route::get('/grn/cetak/{id}', [GrnController::class, 'cetak'])
-         ->name('grn.cetak');
-    Route::get('/grn/cetak-pdf/{id}', [GrnController::class, 'cetakPdf'])
-         ->name('grn.cetak-pdf');
-
-    // Pembayaran
-    Route::get('/pembayaran', [PembayaranController::class, 'index'])
-         ->name('pembayaran.index');
-    Route::post('/pembayaran', [PembayaranController::class, 'store'])
-         ->name('pembayaran.store');
-    Route::get('/pembayaran/daftarpiutang', [PembayaranController::class, 'daftar'])
-         ->name('pembayaran.daftarpiutang');
-
-    // Rekap
-    Route::get('/rekap-barang', [RekapController::class, 'rekapBarang'])
-         ->name('rekap.barang');
-    Route::get('/rekap/pilih-faktur', [RekapController::class, 'pilihFaktur'])
-         ->name('rekap.pilih-faktur');
-    Route::post('/rekap/hasil-rekap', [RekapController::class, 'prosesRekap'])
-         ->name('rekap.hasil-rekap');
-    Route::get('/rekap-faktur', [RekapController::class, 'rekapFaktur'])
-         ->name('rekap.faktur');
-
-    // Piutang Testing
-    Route::get('/dt', [PiutangController::class, 'index'])->name('dt.index');
-    Route::post('/dt', [PiutangController::class, 'store'])->name('dt.store');
-    Route::get('/dt/edit/{id}', [PiutangController::class, 'edit'])->name('dt.edit');
-    Route::put('/dt/update/{id}', [PiutangController::class, 'update'])->name('dt.update');
-    Route::get('/dt/cari-edit', [PiutangController::class, 'showCariEdit'])->name('dt.cari_edit');
+     // Piutang Testing
+     Route::get('/dt',                       [PiutangController::class,'index'])->name('dt.index');
+     Route::post('/dt',                      [PiutangController::class,'store'])->name('dt.store');
+     Route::get('/dt/edit/{id}',             [PiutangController::class,'edit'])->name('dt.edit');
+     Route::put('/dt/update/{id}',           [PiutangController::class,'update'])->name('dt.update');
+     Route::get('/dt/cari-edit',             [PiutangController::class,'showCariEdit'])->name('dt.cari_edit');
+    });
 });
-

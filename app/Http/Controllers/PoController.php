@@ -8,6 +8,8 @@ use App\Models\PoDetail;
 use App\Models\Pelanggan;
 use App\Models\Barang;
 use App\Models\MasterBarang;
+use App\Models\Salesman;
+use App\Models\Supplier;
 use PDF;
 use Illuminate\Support\Facades\Log;
 
@@ -22,18 +24,47 @@ class poController extends Controller
 
     // Ambil daftar PO yang belum diproses (asumsikan status "belum diproses" disimpan sebagai 0)
     $poList = Po::where('status', 0)->get();
+        $pelangganList = Pelanggan::all();
+    $barangList = Barang::all();
+    $masterbarangList = MasterBarang::all();
+    $salesmanList = Salesman::all();
+    $supplierList = Supplier::all(); // Ambil daftar supplier
+      $userLevel = session('user_level');
+    $userSales = session('username');      // atau simpan kode_sales di session
     
     if ($poList->isEmpty()) {
         // Anda bisa memilih untuk menampilkan view dengan pesan kosong, bukan mengembalikan response JSON
-        return view('penjualan.po', compact('po', 'poList'))->with('error', 'Data PO tidak ditemukan.');
+          return view('penjualan.po', [
+            'po'               => $po,
+            'poList'           => $poList,
+            'pelangganList'    => $pelangganList,
+            'barangList'       => $barangList,
+            'masterbarangList' => $masterbarangList,
+            'salesmanList'     => $salesmanList,
+            'supplierList'     => $supplierList,
+            'userLevel'        => $userLevel,
+            'userSales'        => $userSales,
+        ])->with('error', 'Data PO tidak ditemukan.');
     }
     
-    // Ambil data lainnya
-    $pelangganList = Pelanggan::all();
-    $barangList = Barang::all();
-    $masterbarangList = MasterBarang::all();
     
-    return view('penjualan.po', compact('po', 'poList', 'pelangganList', 'barangList', 'masterbarangList'));
+    // Ambil data lainnya
+    // $pelangganList = Pelanggan::all();
+    // $barangList = Barang::all();
+    // $masterbarangList = MasterBarang::all();
+    // $salesmanList = Salesman::all();
+    // $supplierList = Supplier::all(); // Ambil daftar supplier
+       return view('penjualan.po', [
+        'po'               => $po,
+        'poList'           => $poList,
+        'pelangganList'    => $pelangganList,
+        'barangList'       => $barangList,
+        'masterbarangList' => $masterbarangList,
+        'salesmanList'     => $salesmanList,
+        'supplierList'     => $supplierList,
+        'userLevel'        => $userLevel,
+        'userSales'        => $userSales,
+    ]);
 }
 
    public function store(Request $request)
@@ -109,7 +140,7 @@ class poController extends Controller
         {
             // Ambil data po berdasarkan ID
             $po = po::with('details')->findOrFail($id);
-
+  
             // Kirim data ke view cetak
             return view('po.cetak', compact('po'));
         }
@@ -207,87 +238,88 @@ public function destroy($id)
     return response()->json(['success' => 'Data berhasil dihapus.']);
 }
 
-public function edit($id)
-{
-    $po = Po::with('poDetails')->findOrFail($id); // Ambil PO beserta itemnya
-    $pelangganList = Pelanggan::all();
+// public function edit($id)
+// {
+//     $po = Po::with('poDetails')->findOrFail($id); // Ambil PO beserta itemnya
+//     $pelangganList = Pelanggan::all();
+    
+//     $salesmanList       = Salesman::all(); 
+//     // Cek apakah PO memiliki detail barang
+//     $barangItem = null;
+//     if ($po->poDetails->isNotEmpty()) {
+//         $barangItem = $po->poDetails->first()->barang;
+//     }
 
-    // Cek apakah PO memiliki detail barang
-    $barangItem = null;
-    if ($po->poDetails->isNotEmpty()) {
-        $barangItem = $po->poDetails->first()->barang;
-    }
+//     // Pastikan barangItem adalah objek yang valid
+//     if ($barangItem) {
+//         // Lakukan sesuatu dengan barangItem
+//     }
 
-    // Pastikan barangItem adalah objek yang valid
-    if ($barangItem) {
-        // Lakukan sesuatu dengan barangItem
-    }
-
-    return view('penjualan.po-edit', compact('po', 'barangItem', 'pelangganList'));
-}
+//     return view('penjualan.po-edit', compact('po', 'barangItem', 'pelangganList', 'salesmanList'));
+// }
 
 
 
 
-public function update(Request $request, $id)
-{
-    // Validasi data yang diterima
-    $validatedData = $request->validate([
-        'kode_pelanggan' => 'required',
-        'nama_pelanggan' => 'required',
-        'items' => 'required|array',
-        'items.*.kode_barang' => 'required|exists:barang,kode_barang',
-        'items.*.nama_barang' => 'required',
-        'items.*.harga' => 'required|numeric',
-        'items.*.quantity' => 'required|integer|min:1',
-        'items.*.jumlah' => 'required|numeric',
-        // Validasi lainnya jika diperlukan
-    ]);
+// public function update(Request $request, $id)
+// {
+//     // Validasi data yang diterima
+//     $validatedData = $request->validate([
+//         'kode_pelanggan' => 'required',
+//         'nama_pelanggan' => 'required',
+//         'items' => 'required|array',
+//         'items.*.kode_barang' => 'required|exists:barang,kode_barang',
+//         'items.*.nama_barang' => 'required',
+//         'items.*.harga' => 'required|numeric',
+//         'items.*.quantity' => 'required|integer|min:1',
+//         'items.*.jumlah' => 'required|numeric',
+//         // Validasi lainnya jika diperlukan
+//     ]);
 
-    // Update data PO di tabel
+//     // Update data PO di tabel
    
-    $po = Po::findOrFail($id);
-    $po->kode_pelanggan = $request->kode_pelanggan;
-    $po->nama_pelanggan = $request->nama_pelanggan;
-    $po->total = $request->total;
-    // Update data PO lainnya sesuai kebutuhan
+//     $po = Po::findOrFail($id);
+//     $po->kode_pelanggan = $request->kode_pelanggan;
+//     $po->nama_pelanggan = $request->nama_pelanggan;
+//     $po->total = $request->total;
+//     // Update data PO lainnya sesuai kebutuhan
 
-    $po->save();
+//     $po->save();
 
-    // Update data items yang terkait dengan PO
-    foreach ($data['items'] as $item) {
-        $barang = Barang::where('kode_barang', $item['kode_barang'])->first();
+//     // Update data items yang terkait dengan PO
+//     foreach ($data['items'] as $item) {
+//         $barang = Barang::where('kode_barang', $item['kode_barang'])->first();
 
-        if (!$barang) {
-            return redirect()->back()->withErrors(['error' => 'Barang tidak ditemukan.'])->withInput();
-        }
+//         if (!$barang) {
+//             return redirect()->back()->withErrors(['error' => 'Barang tidak ditemukan.'])->withInput();
+//         }
 
-        // Hitung dus, lusin, pcs berdasarkan quantity dan isi dus
-        $isidus = $barang->isidus; // Ambil isi dus dari barang
-        $quantity = $item['quantity'];
+//         // Hitung dus, lusin, pcs berdasarkan quantity dan isi dus
+//         $isidus = $barang->isidus; // Ambil isi dus dari barang
+//         $quantity = $item['quantity'];
 
-        $dus = intdiv($quantity, $isidus);
-        $sisaPcs = $quantity % $isidus;
+//         $dus = intdiv($quantity, $isidus);
+//         $sisaPcs = $quantity % $isidus;
 
-        $lusin = intdiv($sisaPcs, 12);
-        $pcs = $sisaPcs % 12;
+//         $lusin = intdiv($sisaPcs, 12);
+//         $pcs = $sisaPcs % 12;
 
-        // Simpan detail PO
-        $po->podetails()->update([
-            'kode_barang' => $item['kode_barang'],
-            'nama_barang' => $item['nama_barang'],
-            'harga' => $item['harga'],
-            'quantity' => $item['quantity'],
-            'jumlah' => $item['jumlah'],
-            'dus' => $dus,
-            'lusin' => $lusin,
-            'pcs' => $pcs,
-        ]);
-    }
+//         // Simpan detail PO
+//         $po->podetails()->update([
+//             'kode_barang' => $item['kode_barang'],
+//             'nama_barang' => $item['nama_barang'],
+//             'harga' => $item['harga'],
+//             'quantity' => $item['quantity'],
+//             'jumlah' => $item['jumlah'],
+//             'dus' => $dus,
+//             'lusin' => $lusin,
+//             'pcs' => $pcs,
+//         ]);
+//     }
 
-    // Redirect atau return response sesuai kebutuhan
-    return redirect()->route('po.index')->with('success', 'PO berhasil diperbarui!');
-}
+//     // Redirect atau return response sesuai kebutuhan
+//     return redirect()->route('po.index')->with('success', 'PO berhasil diperbarui!');
+// }
 public function processStep2(Request $request)
 {
     $selectedPoIds = $request->input('selected_po');
@@ -327,6 +359,39 @@ public function processStep2(Request $request)
         'poDetails'       => $poDetails, // jika diperlukan untuk referensi
     ]);
 }
+public function search(Request $r)
+{
+    $sales = $r->get('salesman', '');
+    $query = Pelanggan::query();
+    if ($sales) {
+        $query->where('kode_sales', $sales);
+    }
+    // Jika ada parameter `q` untuk live‐search, bisa ditambahkan:
+    // if ($r->filled('q')) { … }
+    return response()->json($query->limit(20)->get());
+}
 
+public function selectSales()
+{
+$salesmanList = Salesman::all();
+return view('penjualan.select-sales', compact('salesmanList'));
+}
+// Handle selection and redirect to PO form
+public function handleSelectSales(Request $request)
+{
+    $request->validate(['kode_sales' => 'required']);
+    return redirect()->route('po.create', ['sales' => $request->kode_sales]);
+}
+
+// Show PO creation form with selected sales
+public function create(Request $request)
+{
+    $selectedSales = $request->get('sales');
+    $salesmanList  = Salesman::all();
+    // pass selectedSales to filter pelanggan
+    return view('penjualan.po', compact('salesmanList', 'selectedSales'));
+}
+
+// store() as before...
 }
 
