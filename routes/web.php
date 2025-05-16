@@ -45,16 +45,11 @@ Route::middleware('no.cache')->group(function(){
     Route::post('/register',[AuthController::class,'register'])->name('register.post');
 });
 
-// Protected (login + no cache)
-Route::middleware(['session.auth','no.cache'])->group(function () {
-    // Dashboard
+// // Protected (login + no cache)
+// Route::middleware(['session.auth','no.cache'])->group(function () {
+//     // Dashboard
     Route::get('/', [DashboardController::class,'index'])->name('home');
-
-    // ---------------------------
-    // Sales-only (level = 1)
-    // ---------------------------
-    Route::middleware('level:1')->group(function () {
-             
+            
                // PO (Sales Order)
                Route::get('/po',          [PoController::class,'index'])->name('po.index');
                Route::post('/po',         [PoController::class,'store'])->name('po.store');
@@ -71,30 +66,7 @@ Route::middleware(['session.auth','no.cache'])->group(function () {
                Route::resource('pelanggan', PelangganController::class)
                ->parameters(['pelanggan'=>'Kode_pelanggan'])
                ->except('show');
-          
-               // Route::post('/pelanggan/import', [PelangganController::class,'import'])->name('pelanggan.import');
                Route::get('/barang',    [BarangController::class,'index'])->name('barang.index');
-    });
-     Route::middleware('level:2,3')->group(function () {
-   
-               Route::get('/po',          [PoController::class,'index'])->name('po.index');
-               Route::post('/po',         [PoController::class,'store'])->name('po.store');
-               Route::get('/api/po/{id}', [PoController::class,'getPOData']);
-                         Route::get('/po/{id}',     [PoController::class,'show'])->name('po.show');
-                    Route::get('/penjualan/daftarso',      [PoController::class,'daftar'])->name('penjualan.daftarso');
-
-                    // (Optional) jika masih pakai wizard select‐sales
-                    Route::get('/po/select-sales',       [PoController::class,'selectSales'])->name('po.select-sales');
-                    Route::post('/po/select-sales',      [PoController::class,'handleSelectSales'])->name('po.handle-select-sales');
-                    Route::get('/po/create',             [PoController::class,'create'])->name('po.create');
-                    Route::get('/pelanggan/search', [PelangganController::class,'search'])->name('pelanggan.search');
-                         Route::get('/masterbarang/search', [MasterBarangController::class,'search'])->name('masterbarang.search');
-                    Route::resource('pelanggan', PelangganController::class)
-                    ->parameters(['pelanggan'=>'Kode_pelanggan'])
-                    ->except('show');
-               
-                    // Route::post('/pelanggan/import', [PelangganController::class,'import'])->name('pelanggan.import');
-                    Route::get('/barang',    [BarangController::class,'index'])->name('barang.index');
      
      Route::get('/penjualan',               [PenjualanController::class,'index'])->name('penjualan.index');
      Route::post('/penjualan',              [PenjualanController::class,'store'])->name('penjualan.store');
@@ -129,7 +101,6 @@ Route::middleware(['session.auth','no.cache'])->group(function () {
      // Pelanggan
      Route::resource('pelanggan', PelangganController::class)
           ->parameters(['pelanggan'=>'Kode_pelanggan']);
-     Route::get('/pelanggan/search',         [PelangganController::class,'search'])->name('pelanggan.search');
      Route::post('/pelanggan/import',        [PelangganController::class,'import'])->name('pelanggan.import');
 
      // Pembayaran
@@ -161,5 +132,4 @@ Route::middleware(['session.auth','no.cache'])->group(function () {
      Route::get('/dt/edit/{id}',             [PiutangController::class,'edit'])->name('dt.edit');
      Route::put('/dt/update/{id}',           [PiutangController::class,'update'])->name('dt.update');
      Route::get('/dt/cari-edit',             [PiutangController::class,'showCariEdit'])->name('dt.cari_edit');
-    });
-});
+// });

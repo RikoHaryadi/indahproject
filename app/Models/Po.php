@@ -10,7 +10,7 @@ class Po extends Model
     use HasFactory;
     protected $table = 'po';
     public $timestamps = false; // Nonaktifkan timestamps
-    protected $fillable = ['kode_pelanggan', 'status', 'nama_pelanggan', 'total', 'created_at'];
+    protected $fillable = ['kode_sales', 'nama_sales', 'kode_pelanggan', 'status', 'nama_pelanggan', 'total', 'created_at'];
 
     public function poDetails()
     {

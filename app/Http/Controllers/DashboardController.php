@@ -9,6 +9,9 @@ use App\Models\Pelanggan;
 use App\Models\Grn; // Pastikan model GRN sudah ada
 use App\Models\Barang;
 use App\Models\Piutang;
+use App\Models\Po;              // ← tambahkan
+use Carbon\Carbon;              // ← untuk helper today()
+use Illuminate\Support\Str;
 
 class DashboardController extends Controller
 {
@@ -44,13 +47,43 @@ class DashboardController extends Controller
     // Total hutang (ambil dari table grn)
     $totalHutang = Grn::sum('total');
 
+       // 1) Hitung SO hari ini secara keseluruhan
+        $soCountHariIni = Po::whereDate('created_at', Carbon::today())->count();
+        $soTotalHariIni = Po::whereDate('created_at', Carbon::today())->sum('total');
+
+        // 2) Jika mau breakdown per salesman tertentu (misal S-001, S-002):
+        $salesCodes = ['S-001','S-002'];
+        $soBySales = [];
+        foreach ($salesCodes as $code) {
+            $soBySales[$code] = [
+                'count' => Po::whereDate('created_at', Carbon::today())
+                              ->where('kode_sales', $code)
+                              ->count(),
+                'total' => Po::whereDate('created_at', Carbon::today())
+                              ->where('kode_sales', $code)
+                              ->sum('total'),
+            ];
+        }
+            $userLevel = session('user_level');
+                $todayOutlets = [];
+                if ($userLevel == 1) {
+                    $me    = session('username');
+                    $today = Carbon::now()->locale('id')->isoFormat('dddd'); // e.g. “Jumat”
+                    $todayOutlets = Pelanggan::where('kode_sales', $me)
+                        ->whereRaw('LOWER(hari_kunjungan) = ?', [Str::lower($today)])
+                        ->pluck('Nama_pelanggan');  // cukup nama toko
+                }
     return view('home', compact(
         'penjualanHariIni',
         'penjualanCashHariIni',
         'penjualanBulanIni',
         'totalPiutang',
         'totalHutang',
-        'totalNilaiStok'
+        'totalNilaiStok',
+        'soCountHariIni',
+        'soTotalHariIni',
+        'soBySales',
+        'todayOutlets'      // tambahkan ini
     ));
 }
 

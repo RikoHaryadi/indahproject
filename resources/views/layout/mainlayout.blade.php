@@ -18,6 +18,9 @@
     <title>Laravel-9 | @yield('title')</title>
 </head>
 <body class="bg-primary-subtle">
+  @php
+    $level = session('user_level');
+@endphp
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
   <div class="container-fluid">
         <a class="navbar-brand" href="/">SNDPro PT. INDAH SEJATI</a>
@@ -29,7 +32,40 @@
         <li class="nav-item">
           <a class="nav-link active" aria-current="page" href="/">Home</a>
         </li>
+    @if($level == 1)
+
+     
         <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Sales Order
+          </a>
+          <ul class="dropdown-menu">
+          <li><a class="dropdown-item" href="/po">Input SO</a></li>
+          <li><a class="dropdown-item" href="/penjualan/daftarso">Daftar SO</a></li>
+          <!-- <li><a class="dropdown-item" href="/so/selection">Proses SO-MultiSO</a></li> -->
+          </ul>
+        </li>
+      
+        <li class="nav-item">
+          <a class="nav-link" href="/barang">Stok</a>
+        </li>
+       
+    @else
+     <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            Sales Order
+          </a>
+          <ul class="dropdown-menu">
+          <li><a class="dropdown-item" href="/po">Input SO</a></li>
+          <li><a class="dropdown-item" href="/penjualan/daftarso">Daftar SO</a></li>
+          <li><a class="dropdown-item" href="/so/selection">Proses SO-MultiSO</a></li>
+          </ul>
+        </li>
+      
+        <li class="nav-item">
+          <a class="nav-link" href="/barang">Stok</a>
+        </li>
+           <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             Master
           </a>
@@ -41,17 +77,7 @@
             <li><a class="dropdown-item" href="/salesman">Salesman</a></li>
           </ul>
         </li>
-        <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            Sales Order
-          </a>
-          <ul class="dropdown-menu">
-          <li><a class="dropdown-item" href="/po">Input SO</a></li>
-          <li><a class="dropdown-item" href="/penjualan/daftarso">Daftar SO</a></li>
-          <li><a class="dropdown-item" href="/so/selection">Proses SO-MultiSO</a></li>
-          </ul>
-        </li>
-        <li class="nav-item dropdown">
+          <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             Penjualan
           </a>
@@ -77,10 +103,8 @@
         <li class="nav-item">
           <a class="nav-link" href="/pembayaran">AR</a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link" href="/barang">Stok</a>
-        </li>
-        <li class="nav-item dropdown">
+      </ul>
+       <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             Akuntansi
           </a>
@@ -91,7 +115,7 @@
             <li><a class="dropdown-item" href="#">Daftar Retur</a></li>
           </ul>
         </li>
-      </ul>
+      @endif
     </div>
             @php
             $user = session('username');

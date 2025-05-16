@@ -5,7 +5,9 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Pelanggan;
 use App\Models\Salesman;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
 class PelangganController extends Controller
 {
@@ -82,11 +84,33 @@ public function store(Request $request)
         return redirect()->route('pelanggan.index')->with('success', 'Pelanggan berhasil ditambahkan!');
     }
 
-public function search(Request $r) {
-    $sales = $r->get('salesman');
-    $pelanggan = Pelanggan::where('kode_sales', $sales)->get();
-    return response()->json($pelanggan);
-}
+ public function search(Request $r)
+    {
+        $sales     = $r->get('salesman');
+        $userLevel = session('user_level', 0);
+
+        Log::info("Pelanggan.search → sales={$sales}, userLevel={$userLevel}");
+
+        $query = Pelanggan::where('kode_sales', $sales);
+
+        if ($userLevel == 1) {
+            $today = Carbon::now()
+                ->locale('id')
+                ->isoFormat('dddd');    // misal “Jumat”
+            Log::info(" → filter hari kunjungan={$today}");
+            $query->whereRaw('LOWER(hari_kunjungan) = ?', [Str::lower($today)]);
+        } else {
+            Log::info(" → admin/SPV tanpa filter hari");
+        }
+
+        $pelanggan = $query->get();
+        Log::info(" → found {$pelanggan->count()} pelanggan");
+
+        return response()->json($pelanggan);
+    }
+
+
+
 
 public function import(Request $request)
 {

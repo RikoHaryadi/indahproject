@@ -26,10 +26,14 @@
             </option>
           @endforeach
         </select>
+         @if($userLevel==1)
+      {{-- backup field supaya tetap dikirim --}}
+      <input type="hidden" name="kode_sales" value="{{ $userSales }}">
+    @endif
       </div>
       <label class="col-sm-2 col-form-label">Nama Salesman:</label>
       <div class="col-sm-3">
-        <input type="text" id="nama_salesman" class="form-control" readonly>
+        <input type="text" id="nama_salesman" name="nama_salesman" class="form-control" readonly>
       </div>
     </div>
 

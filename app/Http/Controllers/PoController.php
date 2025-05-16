@@ -44,6 +44,7 @@ class poController extends Controller
             'supplierList'     => $supplierList,
             'userLevel'        => $userLevel,
             'userSales'        => $userSales,
+            'userLevel' => $userLevel,   // <-- tambahkan ini
         ])->with('error', 'Data PO tidak ditemukan.');
     }
     
@@ -70,6 +71,8 @@ class poController extends Controller
    public function store(Request $request)
 {
     $data = $request->validate([
+        'kode_sales' => 'required',
+        'nama_salesman' => 'required',
         'kode_pelanggan' => 'required',
         'created_at' => 'required',
         'nama_pelanggan' => 'required',
@@ -93,6 +96,8 @@ class poController extends Controller
 
     // Simpan data PO
     $po = Po::create([
+        'kode_sales' => $data['kode_sales'],
+        'nama_sales' => $data['nama_salesman'],
         'kode_pelanggan' => $data['kode_pelanggan'],
         'created_at' => $data['created_at'],
         'status' => 0,
@@ -159,24 +164,50 @@ class poController extends Controller
     
         public function daftar(Request $request)
         {
-            $query = po::query();
+             $userLevel = (int) session('user_level');
+             $userSales = session('username'); // kode_sales si sales
+            
         
-            // Filter berdasarkan tanggal
-            if ($request->filled('tanggal_dari') && $request->filled('tanggal_sampai')) {
-                $query->whereBetween('created_at', [
-                    $request->tanggal_dari . ' 00:00:00',
-                    $request->tanggal_sampai . ' 23:59:59'
-                ]);
-            }
-        
+           // Default hari ini
+    if (! $request->filled('tanggal_dari') && ! $request->filled('tanggal_sampai')) {
+        $today = now()->format('Y-m-d');
+        $request->merge([
+            'tanggal_dari'   => $today,
+            'tanggal_sampai' => $today,
+        ]);
+    }
+        $query = po::query();
+         // Filter tgl
+    if ($request->filled('tanggal_dari') && $request->filled('tanggal_sampai')) {
+        $query->whereBetween('created_at', [
+            $request->tanggal_dari . ' 00:00:00',
+            $request->tanggal_sampai . ' 23:59:59',
+        ]);
+    }
+       // Jika admin/spv (level ≥2), boleh filter manual kode_sales
+    if ($userLevel >= 2) {
+        if ($request->filled('kode_sales')) {
+            $query->where('kode_sales', $request->kode_sales);
+        }
+    }
+    // Jika sales (level 1), paksa hanya miliknya sendiri
+    else {
+        $query->where('kode_sales', $userSales);
+        // agar form menunjukkan si sales-nya
+        $request->merge(['kode_sales' => $userSales]);
+    }
             // Filter berdasarkan kode pelanggan
             if ($request->filled('kode_pelanggan')) {
                 $query->where('kode_pelanggan', $request->kode_pelanggan);
             }
+                  
         
             $po = $query->orderBy('created_at', 'desc')->get();
         
-            return view('penjualan.daftarso', compact('po'));
+           return view('penjualan.daftarso', [
+                'po'        => $po,
+                'userLevel' => $userLevel,   // <-- tambahkan ini
+]);
         }
 
         // public function show($poId)
