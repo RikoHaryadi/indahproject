@@ -59,6 +59,7 @@
           <li><a class="dropdown-item" href="/po">Input SO</a></li>
           <li><a class="dropdown-item" href="/penjualan/daftarso">Daftar SO</a></li>
           <li><a class="dropdown-item" href="/so/selection">Proses SO-MultiSO</a></li>
+          <li><a class="dropdown-item" href="/penjualan/import">Bridging</a></li>
           </ul>
         </li>
       

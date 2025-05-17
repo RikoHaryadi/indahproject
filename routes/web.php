@@ -132,4 +132,12 @@ Route::middleware('no.cache')->group(function(){
      Route::get('/dt/edit/{id}',             [PiutangController::class,'edit'])->name('dt.edit');
      Route::put('/dt/update/{id}',           [PiutangController::class,'update'])->name('dt.update');
      Route::get('/dt/cari-edit',             [PiutangController::class,'showCariEdit'])->name('dt.cari_edit');
+
+     // tampilkan form import
+Route::get('/penjualan/import', [App\Http\Controllers\PenjualanImportController::class, 'showForm'])
+     ->name('penjualan.import.form');
+// proses upload
+Route::post('/penjualan/import', [App\Http\Controllers\PenjualanImportController::class, 'importCsv'])
+     ->name('penjualan.import');
+
 // });
