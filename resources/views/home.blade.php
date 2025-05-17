@@ -34,21 +34,37 @@
             </div>
               {{-- kartu outlet hari ini --}}
     <div class="col-md-6">
-        <div class="card text-dark bg-light mb-3">
-            <div class="card-header">Outlet Kunjungan {{ $me }} ({{ \Carbon\Carbon::now()->format('d-m-Y') }})</div>
-            <div class="card-body">
-                @if($todayOutlets->isEmpty())
-                    <p class="card-text">Tidak ada kunjungan hari ini.</p>
-                @else
-                    <ul class="list-group list-group-flush">
-                        @foreach($todayOutlets as $outlet)
-                            <li class="list-group-item">{{ $outlet }}</li>
-                        @endforeach
-                    </ul>
-                @endif
-            </div>
+    <div class="card text-dark bg-light mb-3">
+        <div class="card-header">
+            Outlet Kunjungan {{ $me }} ({{ \Carbon\Carbon::now()->format('d-m-Y') }})
+        </div>
+        <div class="card-body">
+            {{-- Tambahkan ringkasan call plan --}}
+            <p class="mb-2">
+                <strong>Call Plan:</strong> {{ $todayOutlets->count() }} outlet
+            </p>
+
+            @if($todayOutlets->isEmpty())
+                <p class="card-text">Tidak ada kunjungan hari ini.</p>
+            @else
+                <ul class="list-group list-group-flush">
+                    @foreach($todayOutlets as $kode => $nama)
+                        @php
+                            $done = in_array($kode, $soTodayByMe);
+                        @endphp
+                        <li class="list-group-item d-flex justify-content-between align-items-center"
+                            style="background-color: {{ $done ? '#d4edda' : 'transparent' }};">
+                            {{ $nama }}
+                            @if($done)
+                                <span class="badge bg-success">Done</span>
+                            @endif
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
         </div>
     </div>
+</div>
         @else
            <div class="col-md-3">
             <div class="card text-white bg-info mb-3">

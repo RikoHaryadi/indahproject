@@ -14,10 +14,10 @@ return new class extends Migration
     public function up()
     {
         Schema::create('pelanggan', function (Blueprint $table) {
-            $table->string('Kode_pelanggan', 10)->required;
+            $table->string('Kode_pelanggan', 50)->required;
             $table->string('Nama_pelanggan', 50)->required;
             $table->string('alamat', 100)->required;
-            $table->string('telepon', 15);
+            $table->string('telepon', 25);
             $table->integer('top');
             $table->integer('kredit_limit');
             $table->string('kode_sales', 3);

@@ -10,7 +10,7 @@ class Penjualan extends Model
     use HasFactory;
     protected $table = 'penjualan';
     public $timestamps = false; // Nonaktifkan timestamps
-    protected $fillable = ['id_faktur', 'kode_pelanggan', 'nama_pelanggan', 'total_discount', 'total', 'created_at'];
+    protected $fillable = ['id_faktur', 'kode_sales', 'nama_sales', 'kode_pelanggan', 'nama_pelanggan', 'total_discount', 'total', 'created_at'];
 
     public function details()
     {

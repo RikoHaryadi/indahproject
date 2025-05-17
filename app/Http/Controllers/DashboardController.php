@@ -52,7 +52,7 @@ class DashboardController extends Controller
         $soTotalHariIni = Po::whereDate('created_at', Carbon::today())->sum('total');
 
         // 2) Jika mau breakdown per salesman tertentu (misal S-001, S-002):
-        $salesCodes = ['S-001','S-002'];
+        $salesCodes = ['S-001','S-002', '10', '02'];
         $soBySales = [];
         foreach ($salesCodes as $code) {
             $soBySales[$code] = [
@@ -66,12 +66,17 @@ class DashboardController extends Controller
         }
             $userLevel = session('user_level');
                 $todayOutlets = [];
+                $soTodayByMe = [];
                 if ($userLevel == 1) {
                     $me    = session('username');
                     $today = Carbon::now()->locale('id')->isoFormat('dddd'); // e.g. “Jumat”
-                    $todayOutlets = Pelanggan::where('kode_sales', $me)
+                     $todayOutlets = Pelanggan::where('kode_sales', $me)
                         ->whereRaw('LOWER(hari_kunjungan) = ?', [Str::lower($today)])
-                        ->pluck('Nama_pelanggan');  // cukup nama toko
+                        ->pluck('Nama_pelanggan', 'kode_pelanggan');
+                    $soTodayByMe = Po::where('kode_sales', $me)
+                        ->whereDate('created_at', today())
+                        ->pluck('kode_pelanggan')     // ambil hanya kode pelanggan
+                        ->toArray();
                 }
     return view('home', compact(
         'penjualanHariIni',
@@ -83,7 +88,8 @@ class DashboardController extends Controller
         'soCountHariIni',
         'soTotalHariIni',
         'soBySales',
-        'todayOutlets'      // tambahkan ini
+        'todayOutlets',      // tambahkan ini
+        'soTodayByMe'
     ));
 }
 

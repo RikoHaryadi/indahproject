@@ -109,6 +109,9 @@ public function processFinal(Request $request)
             if (!$po) {
                 continue; // Lewati jika PO tidak ditemukan
             }
+              // ambil sales dari PO
+            $kode_sales  = $po->kode_sales;
+            $nama_sales  = $po->nama_sales;
 
             // Ambil data pelanggan dari PO
             $kode_pelanggan = $po->kode_pelanggan;
@@ -146,6 +149,8 @@ public function processFinal(Request $request)
             // Buat record penjualan dengan menambahkan id_faktur
             $penjualan = \App\Models\Penjualan::create([
                 'id_faktur'       => $id_faktur,
+                'kode_sales'  => $kode_sales,
+                'nama_sales'  => $nama_sales,
                 'kode_pelanggan'  => $kode_pelanggan,
                 'nama_pelanggan'  => $nama_pelanggan,
                 'total_discount'  => 0, // akan diupdate setelah perhitungan detail
