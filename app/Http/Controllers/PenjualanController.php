@@ -11,6 +11,7 @@ use App\Models\Grn;
 use App\Models\Po;
 use App\Models\PoDetail;
 use App\Models\Salesman;
+use Illuminate\Support\Facades\DB; 
 use PDF;
 
 class PenjualanController extends Controller
@@ -212,6 +213,122 @@ public function show($poId)
         }),
     ]);
 }
+   // 1) Tampilkan form edit
+    public function edit($id)
+    {
+        $penj = Penjualan::with('details')->findOrFail($id);
 
+        // Supaya bisa menampilkan nama pelanggan, alamat, telepon:
+        // Misal ada relasi pelanggan: return $this->belongsTo(Pelanggan::class, 'kode_pelanggan', 'Kode_pelanggan');
+        // Kalau belum ada relasi, kita bisa cari manual:
+        $pel = Pelanggan::where('Kode_pelanggan', $penj->kode_pelanggan)->first();
+
+        // Kirimkan $penj, juga data pelanggan (nama, alamat, telepon)
+        return view('penjualan.editpenjualan', [
+            'penj'      => $penj,
+            'pelanggan' => $pel,
+        ]);
+    }
+
+    // 2) Proses update
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'kode_sales'     => 'required|string|max:20',
+            'nama_sales'     => 'required|string|max:100',
+            'kode_pelanggan' => 'required|string|max:20',
+            'nama_pelanggan' => 'required|string|max:100',
+            'created_at'     => 'required|date',
+            // items.* validations:
+            'items'            => 'required|array|min:1',
+            'items.*.kode_barang'  => 'required|string',
+            'items.*.nama_barang'  => 'required|string',
+            'items.*.harga'        => 'required|numeric|min:0',
+            'items.*.dus'          => 'required|integer|min:0',
+            'items.*.lsn'          => 'required|integer|min:0',
+            'items.*.pcs'          => 'required|integer|min:0',
+            'items.*.isidus'       => 'required|integer|min:1',
+            'items.*.quantity'     => 'required|integer|min:1',
+            'items.*.stok'         => 'required|integer',
+            'items.*.disc1'        => 'required|numeric|min:0',
+            'items.*.disc2'        => 'required|numeric|min:0',
+            'items.*.disc3'        => 'required|numeric|min:0',
+            'items.*.disc4'        => 'required|numeric|min:0',
+            'items.*.jumlah'       => 'required|numeric|min:0',
+        ]);
+
+        DB::transaction(function() use ($request, $id) {
+            $penj = Penjualan::findOrFail($id);
+
+            // 1) Update header penjualan
+            $penj->update([
+                'kode_sales'     => $request->kode_sales,
+                'nama_sales'     => $request->nama_sales,
+                'kode_pelanggan' => $request->kode_pelanggan,
+                'nama_pelanggan' => $request->nama_pelanggan,
+                'created_at'     => $request->created_at,
+                // total dan total_discount kita hitung setelah loop detail
+            ]);
+
+            // 2) Hapus semua detail lama
+            foreach ($penj->details as $oldDet) {
+                // Sebelum dihapus, kembalikan stok barang (karena mungkin stok pernah dikurangi saat insert awal)
+                Barang::where('kode_barang', $oldDet->kode_barang)
+                    ->increment('stok', $oldDet->quantity);
+                $oldDet->delete();
+            }
+
+            $totalDiscount = 0;
+            $totalNet      = 0;
+
+            // 3) Simpan ulang semua detail dari request
+            foreach ($request->items as $i) {
+                $harga    = $i['harga'];
+                $quantity = $i['quantity'];
+                $disc1    = $i['disc1'];
+                $disc2    = $i['disc2'];
+                $disc3    = $i['disc3'];
+                $disc4    = $i['disc4'];
+                $jumlah   = $i['jumlah']; // sudah net per baris
+
+                PenjualanDetail::create([
+                    'penjualan_id' => $penj->id,
+                    'kode_barang'  => $i['kode_barang'],
+                    'nama_barang'  => $i['nama_barang'],
+                    'harga'        => $harga,
+                    'dus'          => $i['dus'],
+                    'lusin'        => $i['lsn'],
+                    'pcs'          => $i['pcs'],
+                    'quantity'     => $quantity,
+                    'disc1'        => $disc1,
+                    'disc2'        => $disc2,
+                    'disc3'        => $disc3,
+                    'disc4'        => $disc4,
+                    'jumlah'       => $jumlah,
+                    'created_at'   => now(),
+                ]);
+
+                // Kurangi stok barang (boleh jadi minus)
+                Barang::where('kode_barang', $i['kode_barang'])
+                       ->decrement('stok', $quantity);
+
+                // Hitung total_discount dan total net
+                $totalLineKotor    = $harga * $quantity;
+                $totalDiscPersen   = $disc1 + $disc2 + $disc3 + $disc4;
+                $discValuePerLine  = $totalLineKotor * ($totalDiscPersen / 100);
+                $totalDiscount    += $discValuePerLine;
+                $totalNet         += $jumlah;
+            }
+
+            // 4) Update header dengan total_discount dan total
+            $penj->update([
+                'total_discount' => $totalDiscount,
+                'total'          => $totalNet,
+            ]);
+        });
+
+        return redirect()->route('penjualan.daftarjual')
+                         ->with('success', 'Data penjualan berhasil diperbarui.');
+    }
 
 }
