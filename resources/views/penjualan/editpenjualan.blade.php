@@ -210,7 +210,7 @@
 
 {{-- =========================== SCRIPT & LOGIKA JS =========================== --}}
 <script>
-    // 1) Update Total per Baris (sinkron dengan form input yang ada)
+    // 1) Fungsi updateTotal per baris (langsung sinkron dengan semua kolom input)
     function updateTotal(index) {
         const row = document.querySelector(`#items-body tr:nth-child(${index + 1})`);
         if (!row) return;
@@ -227,40 +227,40 @@
         const disc4    = parseFloat(row.querySelector(`input[name="items[${index}][disc4]"]`).value) || 0;
         const notifEl  = row.querySelector('.warning-text');
 
-        // Hitung quantity
+        // --- a) Hitung quantity ---
         const quantity = (dus * isidus) + (lsn * 12) + pcs;
         row.querySelector(`input[name="items[${index}][quantity]"]`).value = quantity;
 
-        // Jika stok tidak cukup → tandai baris
+        // --- b) Tandai baris jika stok tidak mencukupi ---
         if (stok < quantity) {
-            row.style.backgroundColor = '#f8d7da';
+            row.style.backgroundColor = '#f8d7da'; // merah muda
             notifEl.textContent = 'Stok kurang!';
         } else {
             row.style.backgroundColor = '';
             notifEl.textContent = '';
         }
 
-        // Hitung diskon persentase total baris
+        // --- c) Hitung total kotor dan diskon per baris ---
         const totalKotor     = harga * quantity;
         const totalDiscPct   = disc1 + disc2 + disc3 + disc4;
         const discValueLine  = totalKotor * (totalDiscPct / 100);
         const nettoLine      = totalKotor - discValueLine;
 
-        // Tampilkan jumlah netto di kolom jumlah (jika ingin override)
+        // Tulis nilai netto (setelah diskon) ke kolom “jumlah”
         row.querySelector(`input[name="items[${index}][jumlah]"]`).value = nettoLine;
 
-        // Update total keseluruhan
+        // --- d) Update total keseluruhan (netto semua baris) ---
         calculateTotals();
     }
 
-    // 2) Delete Row
+    // 2) Fungsi untuk menghapus baris
     function deleteRow(button) {
         const row = button.closest('tr');
         row.parentNode.removeChild(row);
         calculateTotals();
     }
 
-    // 3) Hitung Total Keseluruhan (netto)
+    // 3) Fungsi penghitungan “Total Keseluruhan” dari semua kolom jumlah
     function calculateTotals() {
         let total = 0;
         document.querySelectorAll('#items-body tr').forEach((row, idx) => {
@@ -270,73 +270,73 @@
         document.getElementById('total-amount').innerText = total.toFixed(2);
     }
 
-    // 4) Fungsi Menghitung Discount untuk Semua Baris
-    // function recalculateDiscount() {
-    //     let totalKotor = 0;
-    //     // Hitung total kotor dan total dus untuk kode_barang tertentu
-    //     let totalDus21132689 = 0;
-    //     document.querySelectorAll('#items-body tr').forEach((row, idx) => {
-    //         const harga    = parseFloat(row.querySelector(`input[name="items[${idx}][harga]"]`).value) || 0;
-    //         const dus      = parseFloat(row.querySelector(`input[name="items[${idx}][dus]"]`).value) || 0;
-    //         const lsn      = parseFloat(row.querySelector(`input[name="items[${idx}][lsn]"]`).value) || 0;
-    //         const pcs      = parseFloat(row.querySelector(`input[name="items[${idx}][pcs]"]`).value) || 0;
-    //         const isidus   = parseFloat(row.querySelector(`input[name="items[${idx}][isidus]"]`).value) || 1;
-    //         const kodeBar  = row.querySelector(`textarea[name="items[${idx}][kode_barang]"]`).value;
+    // 4) Fungsi “Hitung Discount” (opsional, jika Anda ingin otomatis set discount berdasarkan syarat tertentu)
+    function recalculateDiscount() {
+        // Contoh penyederhanaan: kita hitung TOTAL KOTOR dulu
+        let totalKotor = 0;
+        document.querySelectorAll('#items-body tr').forEach((row, idx) => {
+            const harga    = parseFloat(row.querySelector(`input[name="items[${idx}][harga]"]`).value) || 0;
+            const dus      = parseFloat(row.querySelector(`input[name="items[${idx}][dus]"]`).value) || 0;
+            const lsn      = parseFloat(row.querySelector(`input[name="items[${idx}][lsn]"]`).value) || 0;
+            const pcs      = parseFloat(row.querySelector(`input[name="items[${idx}][pcs]"]`).value) || 0;
+            const isidus   = parseFloat(row.querySelector(`input[name="items[${idx}][isidus]"]`).value) || 1;
 
-    //         const qtyLine  = (dus * isidus) + (lsn * 12) + pcs;
-    //         const kotor    = harga * qtyLine;
-    //         totalKotor    += kotor;
+            const qtyLine  = (dus * isidus) + (lsn * 12) + pcs;
+            totalKotor    += (harga * qtyLine);
+        });
 
-    //         if (kodeBar === "21132689") {
-    //             totalDus21132689 += dus;
-    //         }
-    //     });
+        // Setelah kita dapat totalKotor, kita tetapkan diskon baris per baris
+        document.querySelectorAll('#items-body tr').forEach((row, idx) => {
+            const hargaEl  = row.querySelector(`input[name="items[${idx}][harga]"]`);
+            const dusEl    = row.querySelector(`input[name="items[${idx}][dus]"]`);
+            const lsnEl    = row.querySelector(`input[name="items[${idx}][lsn]"]`);
+            const pcsEl    = row.querySelector(`input[name="items[${idx}][pcs]"]`);
+            const isidusEl = row.querySelector(`input[name="items[${idx}][isidus]"]`);
 
-    //     // Setelah dapat total kotor dan total dus khusus:
-    //     document.querySelectorAll('#items-body tr').forEach((row, idx) => {
-    //         const harga    = parseFloat(row.querySelector(`input[name="items[${idx}][harga]"]`).value) || 0;
-    //         const dus      = parseFloat(row.querySelector(`input[name="items[${idx}][dus]"]`).value) || 0;
-    //         const lsn      = parseFloat(row.querySelector(`input[name="items[${idx}][lsn]"]`).value) || 0;
-    //         const pcs      = parseFloat(row.querySelector(`input[name="items[${idx}][pcs]"]`).value) || 0;
-    //         const isidus   = parseFloat(row.querySelector(`input[name="items[${idx}][isidus]"]`).value) || 1;
-    //         const kodeBar  = row.querySelector(`textarea[name="items[${idx}][kode_barang]"]`).value;
+            const disc1El  = row.querySelector(`input[name="items[${idx}][disc1]"]`);
+            const disc2El  = row.querySelector(`input[name="items[${idx}][disc2]"]`);
+            // disc3 dan disc4 di‐biarkan sesuai input user
 
-    //         // Diskon 1: totalKotor ≥ 1.000.000 → 2%, > 500.000 → 1%, else 0%
-    //         let disc1 = 0;
-    //         if (totalKotor >= 1000000) {
-    //             disc1 = 2;
-    //         } else if (totalKotor > 500000) {
-    //             disc1 = 1;
-    //         }
+            const harga   = parseFloat(hargaEl.value) || 0;
+            const dus     = parseFloat(dusEl.value) || 0;
+            const lsn     = parseFloat(lsnEl.value) || 0;
+            const pcs     = parseFloat(pcsEl.value) || 0;
+            const isidus  = parseFloat(isidusEl.value) || 1;
+            const kodeBar = row.querySelector(`textarea[name="items[${idx}][kode_barang]"]`).value;
 
-    //         // Diskon 2: kode_barang "21132689" & totalDus21132689 > 3 → 10%
-    //         let disc2 = (kodeBar === "21132689" && totalDus21132689 > 3) ? 10 : 0;
+            // 1) Jika totalKotor ≥ 1.000.000 → disc1 = 2%; jika > 500.000 → disc1 = 1%; selain itu = 0%
+            let newDisc1 = 0;
+            if (totalKotor >= 1000000) {
+                newDisc1 = 2;
+            } else if (totalKotor > 500000) {
+                newDisc1 = 1;
+            }
 
-    //         // Jaga agar disc3 dan disc4 tetap apa adanya (value input)
-    //         let disc3 = parseFloat(row.querySelector(`input[name="items[${idx}][disc3]"]`).value) || 0;
-    //         let disc4 = parseFloat(row.querySelector(`input[name="items[${idx}][disc4]"]`).value) || 0;
+            // 2) Jika kode_barang = “21132689” dan total dus (dari semua baris) > 3 → disc2 = 10%, dll
+            //    (di contoh ini, kita hanya menetapkan disc2=10% jika kodeBar === “21132689”)
+            let newDisc2 = 0;
+            if (kodeBar === "21132689" && dus > 3) {
+                newDisc2 = 10;
+            }
 
-    //         // Tulis kembali diskon (disc1, disc2)
-    //         row.querySelector(`input[name="items[${idx}][disc1]"]`).value = disc1;
-    //         row.querySelector(`input[name="items[${idx}][disc2]"]`).value = disc2;
+            // Tulis kembali ke kolom disc1 dan disc2
+            disc1El.value = newDisc1;
+            disc2El.value = newDisc2;
 
-    //         // Setelah urus diskon, panggil updateTotal untuk mereset jumlah baris
-    //         updateTotal(idx);
-    //     });
+            // Setelah diskon dipasang, panggil updateTotal(idx) untuk menghitung ulang baris ini:
+            updateTotal(idx);
+        });
+    }
 
-    //     // Setelah semua baris ter‐update, panggil calculateTotals
-    //     calculateTotals();
-    // }
-
-    // Pasang event listener untuk tombol “Hitung Discount”
+    // Pasang event listener pada tombol “Hitung Discount”
     document.getElementById('hitung-discount')
         .addEventListener('click', recalculateDiscount);
 
-    // Pastikan ketika tombol “Simpan” dipanggil, diskon sudah ter‐hitung
+    // Pastikan tombol “Simpan” pun memanggil recalculateDiscount sebelum submit
     document.getElementById('saveButton')
         .addEventListener('click', recalculateDiscount);
 
-    // 5) Fungsi Tambah Item Baru
+    // 5) Fungsi Tambah Item Baru (jika di form edit Anda masih mengizinkan menambah baris)
     function addNewItem() {
         const index = document.querySelectorAll('#items-body tr').length;
         const row = `
@@ -398,7 +398,7 @@
         calculateTotals();
     }
 
-    // 6) Inisialisasi Select2 (fetch barang via AJAX)
+    // 6) Inisialisasi Select2 (jika Anda membutuhkan AJAX‐based dropdown untuk barang baru)
     function initializeSelect2(index = null) {
         let selector = index !== null
             ? `.kode-barang-select[data-index="${index}"]`
@@ -407,7 +407,7 @@
         $(selector).select2({
             placeholder: 'Cari kode barang atau nama...',
             ajax: {
-                url: '/barang/search',   // Pastikan endpoint ini ada, mengembalikan JSON list barang
+                url: '/barang/search',
                 dataType: 'json',
                 delay: 250,
                 data: function (params) {
@@ -431,7 +431,6 @@
             const data = e.params.data;
             const idx  = $(this).data('index');
 
-            // Isi otomatis kolom di baris tersebut
             document.querySelector(`textarea[name="items[${idx}][nama_barang]"]`).value = data.nama_barang || '';
             document.querySelector(`input[name="items[${idx}][harga]"]`).value = data.harga || 0;
             document.querySelector(`input[name="items[${idx}][isidus]"]`).value = data.isidus || 1;
@@ -440,14 +439,19 @@
         });
     }
 
+    // 7) Setelah Halaman Selesai Dimuat: Panggil updateTotal untuk setiap baris
     document.addEventListener("DOMContentLoaded", function () {
+        // Jika Anda masih butuh Select2 pada edit form, panggil:
         initializeSelect2();
-        // Setelah halaman load, hitung ulang total berdasarkan data yang ada
-        document.querySelectorAll('#items-body tr').forEach((_, idx) => updateTotal(idx));
+
+        // Hitung ulang semua baris agar “Total Keseluruhan” terisi
+        const rowCount = document.querySelectorAll('#items-body tr').length;
+        for (let i = 0; i < rowCount; i++) {
+            updateTotal(i);
+        }
     });
 </script>
 
-{{-- 7) Style CSS Tambahan --}}
 <style>
     .kode-barang-column {
         max-width: 120px;
