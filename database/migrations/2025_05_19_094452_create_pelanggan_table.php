@@ -21,7 +21,7 @@ return new class extends Migration
             $table->integer('top');
             $table->integer('kredit_limit');
             $table->string('kode_sales', 3);
-            $table->string('nama_sales', 15);
+            $table->string('nama_sales', 50);
             $table->string('hari_kunjungan', 15);
         
 

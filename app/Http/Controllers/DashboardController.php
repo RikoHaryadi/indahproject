@@ -52,7 +52,7 @@ class DashboardController extends Controller
         $soTotalHariIni = Po::whereDate('created_at', Carbon::today())->sum('total');
 
         // 2) Jika mau breakdown per salesman tertentu (misal S-001, S-002):
-        $salesCodes = ['S-001','S-002', '10', '02'];
+        $salesCodes = ['01', '10', '02'];
         $soBySales = [];
         foreach ($salesCodes as $code) {
             $soBySales[$code] = [

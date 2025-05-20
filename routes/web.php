@@ -139,5 +139,11 @@ Route::get('/penjualan/import', [App\Http\Controllers\PenjualanImportController:
 // proses upload
 Route::post('/penjualan/import', [App\Http\Controllers\PenjualanImportController::class, 'importCsv'])
      ->name('penjualan.import');
+// Edit form (GET)
+Route::get('/penjualan/{id}/edit', [PenjualanController::class, 'edit'])
+     ->name('penjualan.edit');
 
+// Update (PUT)
+Route::put('/penjualan/{id}', [PenjualanController::class, 'update'])
+     ->name('penjualan.update');
 // });

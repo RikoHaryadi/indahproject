@@ -60,9 +60,18 @@
                 <td>{{ $item->kode_pelanggan }}</td>
                 <td>{{ $item->nama_pelanggan }}</td>
                 <td>{{ number_format($item->total, 2) }}</td>
-                <td>
-                    <a href="{{ route('penjualan.cetak', $item->id) }}" class="btn btn-secondary" target="_blank">Cetak</a>
-                </td>
+                    <td class="text-center">
+                        <!-- Tombol Cetak (jika Anda punya) -->
+                        <a href="{{ route('penjualan.cetak', $item->id) }}"
+                           class="btn btn-secondary btn-sm" target="_blank">
+                            Cetak
+                        </a>
+                        <!-- Tombol Edit -->
+                        <a href="{{ route('penjualan.edit', $item->id) }}"
+                           class="btn btn-primary btn-sm">
+                            Edit
+                        </a>
+                    </td>
             </tr>
             @php $totalOmset += $item->total; @endphp
             @endforeach

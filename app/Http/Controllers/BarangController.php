@@ -111,17 +111,16 @@ public function storeJual(Request $request)
 
     return redirect()->route('barang.jual.create')->with('success', 'Barang berhasil dijual!');
 }
-public function search(Request $request)
-{
-    $search = $request->q;
+ public function search(Request $request)
+    {
+        $q = $request->get('q', '');
+        $data = Barang::where('kode_barang', 'like', "%{$q}%")
+                      ->orWhere('nama_barang', 'like', "%{$q}%")
+                      ->limit(20)
+                      ->get(['kode_barang', 'nama_barang', 'harga', 'isidus', 'stok']);
 
-    $barang = Barang::where('kode_barang', 'LIKE', "%{$search}%")
-        ->orWhere('nama_barang', 'LIKE', "%{$search}%")
-        ->limit(10)
-        ->get();
-
-    return response()->json($barang);
-}
+        return response()->json($data);
+    }
 
 
 }
