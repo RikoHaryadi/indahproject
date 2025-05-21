@@ -6,6 +6,7 @@ use App\Models\PenjualanDetail;
 use App\Models\Pelanggan;
 use App\Models\Barang;
 use App\Models\Grn;
+use App\Models\Salesman;
 
 use Illuminate\Http\Request;
 
@@ -46,12 +47,24 @@ class RekapController extends Controller
     }
 
 
-    public function pilihFaktur()
-    {
-        // Ambil semua faktur
-        $faktur = Penjualan::all();
-        return view('rekap.pilih-faktur', compact('faktur'));
+   public function pilihFaktur(Request $request)
+{
+    $salesList = Salesman::all(); // ambil semua data sales
+
+    $fakturs = [];
+
+    if ($request->has(['tanggal_dari', 'tanggal_sampai', 'kode_sales'])) {
+        $dari  = $request->input('tanggal_dari');
+        $sampai = $request->input('tanggal_sampai');
+        $sales = $request->input('kode_sales');
+
+        $fakturs = Penjualan::whereBetween('created_at', [$dari, $sampai])
+                            ->where('kode_sales', $sales)
+                            ->get();
     }
+
+    return view('rekap.pilih-faktur', compact('fakturs', 'salesList'));
+}
 
     public function prosesRekap(Request $request)
     {

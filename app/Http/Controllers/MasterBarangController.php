@@ -154,14 +154,14 @@ class MasterBarangController extends Controller
                 ]);
 
                 // Simpan ke tabel Barang
-                // \App\Models\Barang::create([
-                //     'kode_barang'  => $kode_barang,
-                //     'nama_barang'  => $nama_barang,
-                //     'isidus'       => $isidus,
-                //     'harga'        => $hargapcs,
-                //     'nilairp'      => $hargapcsjual,
-                //     'stok' => 0,
-                // ]);
+                \App\Models\Barang::create([
+                    'kode_barang'  => $kode_barang,
+                    'nama_barang'  => $nama_barang,
+                    'isidus'       => $isidus,
+                    'harga'        => $hargapcs,
+                    'nilairp'      => $hargapcsjual,
+                    'stok' => 0,
+                ]);
 
                 // Increment counter ketika data berhasil diinsert
                 $dataInserted++;

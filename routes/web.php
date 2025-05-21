@@ -97,6 +97,7 @@ Route::middleware('no.cache')->group(function(){
      Route::get('/grn/daftar',               [GrnController::class,'daftar'])->name('grn.daftargrn');
      Route::get('/grn/cetak/{id}',           [GrnController::class,'cetak'])->name('grn.cetak');
      Route::get('/grn/cetak-pdf/{id}',       [GrnController::class,'cetakPdf'])->name('grn.cetak-pdf');
+     Route::post('/grn',         [GrnController::class,'store'])->name('grn.store');
 
      // Pelanggan
      Route::resource('pelanggan', PelangganController::class)

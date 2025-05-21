@@ -5,6 +5,7 @@
     <h1>Daftar SO Diproses</h1>
     <form method="POST" action="{{ route('so.process.step2') }}">
         @csrf
+        
         <table class="table table-bordered table-sm" style="font-size:12px;">
             <thead class="table-success">
                 <tr>

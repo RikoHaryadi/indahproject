@@ -128,10 +128,15 @@
                                        value="{{ $det->pcs }}" oninput="updateTotal({{ $idx }})">
                             </td>
                             <td>
-                                <input type="number" name="items[{{ $idx }}][isidus]"
-                                       class="form-control" style="font-size:12px;"
-                                       value="{{ $det->dus > 0 ? intval($det->quantity / $det->dus) : 1 }}"
-                                       readonly>
+                            @php
+                                $masterBarang = \App\Models\Barang::where('kode_barang', $det->kode_barang)->first();
+                                $masterIsidus = $masterBarang ? intval($masterBarang->isidus) : 1;
+                            @endphp
+
+                            <input type="number" name="items[{{ $idx }}][isidus]"
+                                class="form-control" style="font-size:12px;"
+                                value="{{ $masterIsidus }}"
+                                readonly>
                             </td>
                             <td>
                                 <input type="number" name="items[{{ $idx }}][quantity]"
@@ -197,6 +202,9 @@
         <!-- 4. Tombol Submit -->
         <button type="submit" class="btn btn-success mt-3" id="saveButton">
             Simpan Perubahan
+        </button>
+                <button type="button" class="btn btn-danger mt-3" id="cancel">
+            Cancel
         </button>
         @if($errors->any())
             <ul class="text-danger mt-2">
@@ -316,7 +324,7 @@
             //    (di contoh ini, kita hanya menetapkan disc2=10% jika kodeBar === “21132689”)
             let newDisc2 = 0;
             if (kodeBar === "21132689" && dus > 3) {
-                newDisc2 = 10;
+                newDisc2 = 0;
             }
 
             // Tulis kembali ke kolom disc1 dan disc2
@@ -449,6 +457,9 @@
         for (let i = 0; i < rowCount; i++) {
             updateTotal(i);
         }
+    });
+     document.getElementById('cancel').addEventListener('click', function () {
+        window.location.href = "/penjualan/daftar";
     });
 </script>
 
