@@ -51,7 +51,7 @@
             <tbody>
                 @foreach($fakturs as $f)
                 <tr>
-                 
+                
                     <td>
                         <input type="checkbox" class="faktur-checkbox" name="faktur_ids[]" value="{{ $f->id }}">
                     </td>

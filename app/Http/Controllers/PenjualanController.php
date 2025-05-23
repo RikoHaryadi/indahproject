@@ -330,5 +330,32 @@ public function show($poId)
         return redirect()->route('penjualan.daftarjual')
                          ->with('success', 'Data penjualan berhasil diperbarui.');
     }
+    /**
+     * AJAX: mencari faktur (id_faktur) berdasarkan query 'q'
+     * Mengembalikan JSON: [{ id: penjualan.id, id_faktur: penjualan.id_faktur }, …]
+     */
+     public function searchFaktur(Request $request)
+{
+    $search = $request->q;
+
+    $data = Penjualan::where('id', 'like', "%$search%")
+        ->select('id', 'id_faktur', 'nama_pelanggan', 'total')
+        ->limit(20)
+        ->get(['id', 'id_faktur', 'nama_pelanggan', 'total']);
+
+    $results = $data->map(function ($item) {
+        return [
+            'id' => $item->id,
+            'id_faktur' => $item->id_faktur,  // <-- Ini yang dibaca Select2
+            'nama_pelanggan' => $item->nama_pelanggan,
+            'total' => $item->total
+        ];
+    });
+
+    return response()->json($results);
+}
+
+
+
 
 }

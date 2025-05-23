@@ -19,6 +19,7 @@ use App\Http\Controllers\PoController;
 use App\Http\Controllers\MultiplepoController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PiutangController;
+use App\Http\Controllers\ReturController;
 
 /*
 |--------------------------------------------------------------------------
@@ -148,3 +149,19 @@ Route::get('/penjualan/{id}/edit', [PenjualanController::class, 'edit'])
 Route::put('/penjualan/{id}', [PenjualanController::class, 'update'])
      ->name('penjualan.update');
 // });
+// Menampilkan Form Retur Penjualan
+Route::get('/retur-penjualan', [ReturController::class, 'showForm'])->name('retur.form');
+
+// AJAX: Ambil detail penjualan (header + detail item) berdasar ID penjualan
+Route::get('/retur-penjualan/details-faktur/{id}', [ReturPenjualanController::class, 'getDetailFaktur']);
+
+// Proses Submit Form Retur Penjualan
+Route::post('/retur-penjualan', [ReturController::class, 'processRetur'])
+     ->name('retur.submit');
+    // Route untuk AJAX search faktur
+Route::get('/penjualan/search-faktur', [PenjualanController::class, 'searchFaktur'])
+     ->name('penjualan.search-faktur');
+Route::get('/retur-penjualan/details/{id}', [ReturController::class, 'getPenjualanDetails']);
+
+
+    
