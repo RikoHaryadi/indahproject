@@ -16,6 +16,7 @@ use App\Http\Controllers\BiayaController;
 use App\Http\Controllers\SalesmanController;
 use App\Http\Controllers\RekapController;
 use App\Http\Controllers\PoController;
+use App\Http\Controllers\SoController;
 use App\Http\Controllers\MultiplepoController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PiutangController;
@@ -53,6 +54,7 @@ Route::middleware('no.cache')->group(function(){
             
                // PO (Sales Order)
                Route::get('/po',          [PoController::class,'index'])->name('po.index');
+                 Route::get('/so',          [SoController::class,'index'])->name('po.index');
                Route::post('/po',         [PoController::class,'store'])->name('po.store');
                Route::get('/api/po/{id}', [PoController::class,'getPOData']);
                Route::get('/po/{id}',     [PoController::class,'show'])->name('po.show');

@@ -46,13 +46,13 @@
     <table class="table table-bordered border-primary fs-8">
         <thead>
             <tr>
+                <th>No</th>
                 <th>ID</th>
                 <th>Tanggal</th>
                 <th>Sales</th>
                 <th>Kode Pelanggan</th>
                 <th>Nama Pelanggan</th>
                  <th class="text-end">Total</th>
-                <th>Total</th>
                 <th>Aksi</th>
             </tr>
         </thead>

@@ -3,6 +3,8 @@
 namespace App\Exceptions;
 
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Session\TokenMismatchException;
+use Illuminate\Support\Facades\Auth; // ✅ Tambahkan baris ini!
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -38,4 +40,19 @@ class Handler extends ExceptionHandler
             //
         });
     }
+    public function render($request, Throwable $exception)
+{
+    if ($exception instanceof TokenMismatchException) {
+            Auth::logout(); // ✅ Logout user
+            $request->session()->invalidate(); // ✅ Hapus session
+            $request->session()->regenerateToken(); // ✅ Buat token baru
+
+            return redirect()->route('login')->withErrors([
+                'session_expired' => 'Session telah berakhir, silakan login kembali.'
+            ]);
+        }
+
+        return parent::render($request, $exception);
+    
+}
 }

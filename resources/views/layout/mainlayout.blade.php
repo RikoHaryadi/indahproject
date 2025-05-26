@@ -40,7 +40,7 @@
             Sales Order
           </a>
           <ul class="dropdown-menu">
-          <li><a class="dropdown-item" href="/po">Input SO</a></li>
+          <li><a class="dropdown-item" href="/so">Input SO</a></li>
           <li><a class="dropdown-item" href="/penjualan/daftarso">Daftar SO</a></li>
           <!-- <li><a class="dropdown-item" href="/so/selection">Proses SO-MultiSO</a></li> -->
           </ul>
@@ -86,17 +86,8 @@
             <li><a class="dropdown-item" href="/penjualan">Proses SO</a></li>
             <li><a class="dropdown-item" href="/penjualan/daftar">Daftar Transaksi</a></li>
             <li><a class="dropdown-item" href="/rekap/pilih-faktur">Buat Rekap Faktur</a></li>
-            <li><a class="dropdown-item" href="#">Retur</a></li>
+            <li><a class="dropdown-item" href="/retur-penjualan">Retur</a></li>
             <li><a class="dropdown-item" href="#">Daftar Retur</a></li>
-          </ul>
-        </li>
-         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-            Retur Penjualan
-          </a>
-          <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="/retur-penjualan">Input Retur</a></li>
-            
           </ul>
         </li>
         <li class="nav-item dropdown">
@@ -113,7 +104,6 @@
         <li class="nav-item">
           <a class="nav-link" href="/pembayaran">AR</a>
         </li>
-      </ul>
        <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             Akuntansi

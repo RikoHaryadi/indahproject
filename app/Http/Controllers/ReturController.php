@@ -13,6 +13,7 @@ use App\Models\ReturDetail;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Exception;
 
 
 class ReturController extends Controller
@@ -73,33 +74,29 @@ class ReturController extends Controller
      * - Update stok barang (menambah stok kembali)
      */
     public function processRetur(Request $request)
-    {
-        Log::info('Masuk ke proses retur!');
+{
+    Log::info('Masuk ke proses retur!');
+    $kodeBarangError = null; // Tambahkan ini
 
-        // 1) Validasi basic input
-        $request->validate([
-            'penjualan_id'      => 'required|exists:penjualan,id',
-            'items'             => 'required|array',
-            'items.*.detail_id' => 'required|exists:penjualan_detail,id',
-            'items.*.retur_dus'   => 'required|integer|min:0',
-            'items.*.retur_lusin' => 'required|integer|min:0',
-            'items.*.retur_pcs'   => 'required|integer|min:0',
-        ]);
+    $request->validate([
+        'penjualan_id'      => 'required|exists:penjualan,id',
+        'items'             => 'required|array',
+        'items.*.detail_id' => 'required|exists:penjualan_detail,id',
+        'items.*.retur_dus'   => 'required|integer|min:0',
+        'items.*.retur_lusin' => 'required|integer|min:0',
+        'items.*.retur_pcs'   => 'required|integer|min:0',
+    ]);
 
-        // 2) Mulai transaksi DB untuk atomic
-        DB::transaction(function() use ($request) {
-            // Ambil header penjualan asli
+    try {
+        DB::transaction(function () use ($request) {
             $penj = Penjualan::with('pelanggan')->find($request->penjualan_id);
-
-            // Generate id_retur unik (misal: "RT-YYYYMMDD-XXXX")
             $timestamp   = Carbon::now()->format('YmdHis');
             $idRetur     = 'RT-' . $timestamp;
 
-            // 3) Siapkan total_discount dan total (kita akan hitung di detail)
-            $totalRetur        = 0;
-            $totalDiscountRetur= 0; // jika perlu, di sini bisa diisi sesuai aturan discount
+            $totalRetur = 0;
+            $totalDiscountRetur = 0;
 
-            // 4) Simpan header retur
+            // 1x simpan header retur di awal, agar ID bisa dipakai untuk detail
             $retur = Retur::create([
                 'id_retur'        => $idRetur,
                 'id_faktur'       => $penj->id_faktur,
@@ -107,55 +104,42 @@ class ReturController extends Controller
                 'nama_sales'      => $penj->nama_sales,
                 'kode_pelanggan'  => $penj->kode_pelanggan,
                 'nama_pelanggan'  => $penj->nama_pelanggan,
-                'total_discount'  => $totalDiscountRetur,
-                'total'           => 0, // sementara 0, kita update di akhir
+                'total_discount'  => 0,
+                'total'           => 0,
             ]);
 
-            // 5) Proses tiap item dalam request untuk disimpan di returdetails
             foreach ($request->items as $item) {
-                $detailId    = $item['detail_id'];
-                $returDus    = intval($item['retur_dus']);
-                $returLusin  = intval($item['retur_lusin']);
-                $returPcs    = intval($item['retur_pcs']);
+                $detailAsli = PenjualanDetail::find($item['detail_id']);
+                if (! $detailAsli) continue;
 
-                // Ambil data detail penjualan asli
-                $detailAsli = PenjualanDetail::find($detailId);
-                if (! $detailAsli) {
-                    // Jika tidak ditemukan, continue (meskipun validasi seharusnya mencegah ini)
-                    continue;
-                }
+                $returDus   = intval($item['retur_dus']);
+                $returLusin = intval($item['retur_lusin']);
+                $returPcs   = intval($item['retur_pcs']);
 
-                // Validasi logika: 
-                // - returDus tidak boleh > detailAsli->dus, 
-                // - returLusin tidak boleh > detailAsli->lusin,
-                // - returPcs tidak boleh > detailAsli->pcs.
-                if ($returDus > $detailAsli->dus
-                    || $returLusin > $detailAsli->lusin
-                    || $returPcs > $detailAsli->pcs) {
-                    // Kita lempar Exception agar transaksi rollback
-                    throw new \Exception("Jumlah retur melebihi jumlah penjualan untuk kode: {$detailAsli->kode_barang}");
-                }
-
-                // Hitung quantity (PCS) asli dan quantity retur (PCS)
-                $isidus         = optional($detailAsli->barang)->isidus ?? 1; 
-                $quantityAsli   = $detailAsli->quantity; // (misal: dus*isidus + lusin*12 + pcs)
+                $isidus         = optional($detailAsli->barang)->isidus ?? 1;
+                $quantityAsli   = $detailAsli->quantity;
                 $quantityRetur  = $returDus * $isidus + $returLusin * 12 + $returPcs;
 
+                $returSebelumnya = ReturDetail::where('kode_barang', $detailAsli->kode_barang)
+                    ->whereHas('retur', function ($query) use ($request) {
+                        $query->where('id_faktur', Penjualan::find($request->penjualan_id)->id_faktur);
+                    })
+                    ->sum('quantityretur');
+                    $kodeBarangError = $detailAsli->kode_barang; // Simpan dulu
+
+                if ($quantityRetur + $returSebelumnya > $quantityAsli) {
+                    // Batal transaksi dengan exception
+                    throw new Exception("Jumlah retur melebihi penjualan untuk kode: {$detailAsli->kode_barang}");
+                }
+
                 if ($quantityRetur <= 0) {
-                    // Jika user tidak memasukkan retur sama sekali, skip
                     continue;
                 }
 
-                // Hitung jumlah (subtotal) untuk retur: 
-                // Misal kita hanya mengalikan harga * quantityRetur
-                $hargaPerItem = $detailAsli->harga; 
+                $hargaPerItem = $detailAsli->harga;
                 $jumlahRetur  = $hargaPerItem * $quantityRetur;
-
-                // (Opsional) Hitung discount per baris retur jika diperlukan, 
-                // di sini kita set 0.
                 $discountBaris = 0;
 
-                // Simpan detail retur
                 ReturDetail::create([
                     'retur_id'      => $retur->id,
                     'kode_barang'   => $detailAsli->kode_barang,
@@ -173,26 +157,28 @@ class ReturController extends Controller
                     'created_at'    => Carbon::now()->format('Y-m-d'),
                 ]);
 
-                // Tambahkan ke total keseluruhan
                 $totalRetur += $jumlahRetur;
                 $totalDiscountRetur += $discountBaris;
 
-                // 6) Update stok di tabel barang: barang.stok += quantityRetur
                 Barang::where('kode_barang', $detailAsli->kode_barang)
-                      ->increment('stok', $quantityRetur);
+                    ->increment('stok', $quantityRetur);
             }
 
-            // 7) Update nilai total dan total_discount di header retur
             $retur->update([
                 'total_discount' => $totalDiscountRetur,
                 'total'          => $totalRetur,
             ]);
         });
 
-        // 8) Setelah sukses, redirect kembali dengan pesan
-        return redirect()->route('retur.form')
-                         ->with('success', 'Retur Penjualan berhasil disimpan dan stok telah diupdate.');
+        return redirect()->route('retur.form')->with('success', 'Retur Penjualan berhasil disimpan dan stok telah diupdate.');
+    } catch (Exception $e) {
+        // Kembali ke form jika gagal karena retur berlebih
+        return redirect()->back()
+            ->withInput()
+            ->with('retur_error', $e->getMessage())
+            ->with('fokus_kode', $kodeBarangError); // Gunakan variabel aman
     }
+}
 public function getDetailPenjualan($kode)
 {
     $penjualan = Penjualan::with('detailBarang', 'pelanggan')

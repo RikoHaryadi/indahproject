@@ -131,6 +131,12 @@ input[type=submit]:hover{
 </style>
 
 <body>
+  @if($errors->has('session_expired'))
+    <div class="alert alert-warning">
+        {{ $errors->first('session_expired') }}
+    </div>
+@endif
+
    <div class="wrapper animated bounce">
         <h1>Indah Sejati</h1>
         <hr>

@@ -83,7 +83,6 @@
                     <th>Qty Lsn</th>
                     <th>Qty Pcs</th>
                     <th>Isi Dus</th>
-                    
                     <th>Quantity</th>
                     <th>Jumlah</th>
                     <th>Aksi</th>
@@ -513,6 +512,32 @@ function deleteRow(button) {
         font-size: 12px; /* Ukuran font kecil agar lebih pas */
         padding: 5px; /* Padding agar lebih rapi */
     }
+     @media (max-width: 576px) {
+    label.form-label {
+      font-size: 13px;
+    }
+      .kode-barang-column {
+        max-width: 100px; /* Ubah sesuai kebutuhan */
+        word-wrap: break-word; /* Membungkus teks */
+        white-space: normal; /* Izinkan teks turun ke bawah */
+    }
+     .kode-barang-select {
+        width: 100% !important;
+        min-width: 100px; /* Sesuaikan dengan kebutuhan */
+    }
+
+    input, select, button {
+      font-size: 10px;
+    }
+     .form-control {
+        font-size: 10px; /* Ukuran font kecil agar lebih pas */
+        padding: 5px; /* Padding agar lebih rapi */
+    }
+
+    .btn {
+      padding: 8px 12px;
+    }
+  }
 </style>
 @endsection
 @push('styles')
