@@ -177,11 +177,32 @@ function loadBarang(keyword) {
 
 // Setelah barang dipilih
 function pilihBarang(kode, nama, harga, isidus) {
+  // Cek apakah kode barang sudah ada di baris lain
+  let duplikat = false;
+
+  $('input[name^="items["][name$="[kode_barang]"]').each(function() {
+    const val = $(this).val();
+    const thisIndex = $(this).attr('id').split('_')[2]; // kode_barang_0 → ambil 0
+    if (val === kode && parseInt(thisIndex) !== currentIndexForBarang) {
+      duplikat = true;
+      return false; // break loop
+    }
+  });
+
+  if (duplikat) {
+    alert('Kode barang sudah dipilih di baris lain!');
+    return;
+  }
+
+  // Jika tidak duplikat, isi field seperti biasa
   const idx = currentIndexForBarang;
   $(`#kode_barang_${idx}`).val(kode);
   $(`input[name="items[${idx}][nama_barang]"]`).val(nama);
   $(`input[name="items[${idx}][harga]"]`).val(harga);
   $(`input[name="items[${idx}][isidus]"]`).val(isidus);
+
+  // Hapus warning jika ada sebelumnya
+  $(`#kode_barang_${idx}`).removeClass('is-invalid');
 
   $('#barangModal').modal('hide');
 }

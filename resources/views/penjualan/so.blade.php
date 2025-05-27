@@ -107,12 +107,109 @@
     @endif    
    
 </form>
+<!-- Modal Pilih Barang -->
+<div class="modal fade" id="barangModal" tabindex="-1" aria-labelledby="barangModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Pilih Barang</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="search-barang" class="form-control mb-3" placeholder="Cari nama atau kode barang...">
+        <table class="table table-sm table-hover" id="table-barang">
+          <thead>
+            <tr style="font-size: 12px;">
+              <th>Kode</th>
+              <th>Nama</th>
+              <th>Harga</th>
+              <th>Isi Dus</th>
+              <th>Stok</th>
+              <th>Pilih</th>
+            </tr>
+          </thead>
+          <tbody id="barang-list">
+            {{-- Daftar barang akan diisi via JS --}}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
 </div>
 {{-- JS --}}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
+   let currentIndexForBarang = null;
+
+function openBarangModal(index) {
+  currentIndexForBarang = index;
+  $('#barangModal').modal('show');
+  loadBarang('');
+}
+
+// Pencarian saat ketik
+$('#search-barang').on('keyup', function() {
+  const keyword = $(this).val();
+  loadBarang(keyword);
+});
+
+// Load data barang dari server
+function loadBarang(keyword) {
+  $.getJSON('/barang/search', { q: keyword }, function(data) {
+    let rows = '';
+    data.forEach(b => {
+      rows += `
+        <tr style="font-size: 12px;">
+          <td>${b.kode_barang}</td>
+          <td>${b.nama_barang}</td>
+          <td>${b.nilairp}</td>
+          <td>${b.isidus}</td>
+          <td>${b.stok}</td>
+          <td>
+            <button class="btn btn-sm btn-primary" onclick="pilihBarang('${b.kode_barang}', '${b.nama_barang}', '${b.nilairp}', '${b.isidus}', '${b.stok}')">Pilih</button>
+          </td>
+        </tr>`;
+    });
+    $('#barang-list').html(rows);
+  });
+}
+
+// Setelah barang dipilih
+function pilihBarang(kode, nama, harga, isidus, stok) {
+  // Cek apakah kode barang sudah ada di baris lain
+  let duplikat = false;
+
+  $('input[name^="items["][name$="[kode_barang]"]').each(function() {
+    const val = $(this).val();
+    const thisIndex = $(this).attr('id').split('_')[2]; // kode_barang_0 → ambil 0
+    if (val === kode && parseInt(thisIndex) !== currentIndexForBarang) {
+      duplikat = true;
+      return false; // break loop
+    }
+  });
+
+  if (duplikat) {
+    alert('Kode barang sudah dipilih di baris lain!');
+    return;
+  }
+
+  // Jika tidak duplikat, isi field seperti biasa
+  const idx = currentIndexForBarang;
+  $(`#kode_barang_${idx}`).val(kode);
+  $(`input[name="items[${idx}][nama_barang]"]`).val(nama);
+  $(`input[name="items[${idx}][harga]"]`).val(harga);
+  $(`input[name="items[${idx}][isidus]"]`).val(isidus);
+  $(`input[name="items[${idx}][stok]"]`).val(stok);
+
+  // Hapus warning jika ada sebelumnya
+  $(`#kode_barang_${idx}`).removeClass('is-invalid');
+
+  $('#barangModal').modal('hide');
+}
 $(function(){
   // 1) Fungsi isi nama_salesman
   function fillSalesman(){
@@ -201,12 +298,12 @@ function addNewItem() {
     
     const row = `
     <tr>
-    <td class="kode-barang-column">
-    
-            <select name="items[${index}][kode_barang]" class="form-control kode-barang-select" data-index="${index}" style="width: 100%; font-size: 9px;">
-                <option value="">Pilih Barang</option>
-            </select>
-        </td>    
+  <td class="kode-barang-column">
+    <div class="input-group">
+        <input type="text" class="form-control" name="items[${index}][kode_barang]" id="kode_barang_${index}" style="font-size: 7px;" readonly>
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="openBarangModal(${index})">Cari</button>
+    </div>
+</td>
 
         <td><input type="text" name="items[${index}][nama_barang]" class="form-control" style="font-size: 6px;" readonly></td>
          <td class="border hide-mobile"><input type="hidden" name="items[${index}][harga]" class="form-control" style="font-size: 6px;" readonly></td>
@@ -495,6 +592,10 @@ function deleteRow(button) {
 </script>
 
 <style>
+    .is-invalid {
+  border-color: red !important;
+  background-color:rgb(187, 46, 46) !important;
+}
   /* Tabel scroll horizontal di layar kecil */
   .table-responsive {
     overflow-x: auto;
@@ -566,6 +667,7 @@ function deleteRow(button) {
       font-size: 9px;
     }
   }
+
 </style>
 @endsection
 @push('styles')
