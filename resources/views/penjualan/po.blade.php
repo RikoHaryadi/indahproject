@@ -106,12 +106,86 @@
     @endif    
    
 </form>
+<!-- Modal Pilih Barang -->
+<div class="modal fade" id="barangModal" tabindex="-1" aria-labelledby="barangModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Pilih Barang</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+      </div>
+      <div class="modal-body">
+        <input type="text" id="search-barang" class="form-control mb-3" placeholder="Cari nama atau kode barang...">
+        <table class="table table-sm table-hover" id="table-barang">
+          <thead>
+            <tr style="font-size: 12px;">
+              <th>Kode</th>
+              <th>Nama</th>
+              <th>Harga</th>
+              <th>Isi Dus</th>
+              <th>Pilih</th>
+            </tr>
+          </thead>
+          <tbody id="barang-list">
+            {{-- Daftar barang akan diisi via JS --}}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
 </div>
 {{-- JS --}}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
 
 <script>
+  let currentIndexForBarang = null;
+
+function openBarangModal(index) {
+  currentIndexForBarang = index;
+  $('#barangModal').modal('show');
+  loadBarang('');
+}
+
+// Pencarian saat ketik
+$('#search-barang').on('keyup', function() {
+  const keyword = $(this).val();
+  loadBarang(keyword);
+});
+
+// Load data barang dari server
+function loadBarang(keyword) {
+  $.getJSON('/barang/search', { q: keyword }, function(data) {
+    let rows = '';
+    data.forEach(b => {
+      rows += `
+        <tr style="font-size: 12px;">
+          <td>${b.kode_barang}</td>
+          <td>${b.nama_barang}</td>
+          <td>${b.nilairp}</td>
+          <td>${b.isidus}</td>
+          <td>
+            <button class="btn btn-sm btn-primary" onclick="pilihBarang('${b.kode_barang}', '${b.nama_barang}', '${b.nilairp}', '${b.isidus}')">Pilih</button>
+          </td>
+        </tr>`;
+    });
+    $('#barang-list').html(rows);
+  });
+}
+
+// Setelah barang dipilih
+function pilihBarang(kode, nama, harga, isidus) {
+  const idx = currentIndexForBarang;
+  $(`#kode_barang_${idx}`).val(kode);
+  $(`input[name="items[${idx}][nama_barang]"]`).val(nama);
+  $(`input[name="items[${idx}][harga]"]`).val(harga);
+  $(`input[name="items[${idx}][isidus]"]`).val(isidus);
+
+  $('#barangModal').modal('hide');
+}
+
 $(function(){
   // 1) Fungsi isi nama_salesman
   function fillSalesman(){
@@ -200,12 +274,12 @@ function addNewItem() {
     
     const row = `
     <tr>
-    <td class="kode-barang-column">
-    
-            <select name="items[${index}][kode_barang]" class="form-control kode-barang-select" data-index="${index}" style="width: 100%; font-size: 10px;">
-                <option value="">Pilih Barang</option>
-            </select>
-        </td>    
+   <td class="kode-barang-column">
+    <div class="input-group">
+        <input type="text" class="form-control" name="items[${index}][kode_barang]" id="kode_barang_${index}" readonly>
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="openBarangModal(${index})">Cari</button>
+    </div>
+</td>
         <td><input type="text" name="items[${index}][nama_barang]" class="form-control" style="max-width: 150px;" readonly></td>
         <td><input type="number" name="items[${index}][harga]" class="form-control" style="font-size: 10px;" readonly></td>
         <td><input type="number" name="items[${index}][dus]" class="form-control" oninput="updateTotal(${index})" value = 0 required style="font-size: 10px;"></td>
@@ -264,7 +338,7 @@ function initializeSelect2() {
     $('.kode-barang-select').select2({
     placeholder: 'Cari kode barang atau nama...',
     ajax: {
-      url: '/masterbarang/search',
+      url: '/barang/search',
       dataType: 'json',
       delay: 250,
       data: params => ({ q: params.term }),
@@ -273,7 +347,7 @@ function initializeSelect2() {
           id: item.kode_barang,
           text: `${item.kode_barang} – ${item.nama_barang}`,
           nama_barang: item.nama_barang,
-          harga: item.hargapcsjual,
+          harga: item.nilairp,
           isidus: item.isidus
         }))
       }),

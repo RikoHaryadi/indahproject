@@ -31,46 +31,46 @@
       <input type="hidden" name="kode_sales" value="{{ $userSales }}">
     @endif
       </div>
-      <label class="col-sm-2 col-form-label">Nama Salesman:</label>
+      <label class="col-sm-2 col-form-label hide-mobile">Nama Salesman:</label>
       <div class="col-sm-3">
-        <input type="text" id="nama_salesman" name="nama_salesman" class="form-control" readonly>
+        <input type="text" id="nama_salesman" name="nama_salesman" class="form-control hide-mobile" readonly>
       </div>
     </div>
 
  
-    <div class="row mb-3">
+    <div class="row mb-1">
         <label for="created_at colFormLabelSm" class="col-sm-2 col-form-label col-form-label-sm">Tanggal Transaksi</label>
         <div class="col-sm-3">
         <input type="date" id="created_at" name="created_at" class="form-control" value="{{ date('Y-m-d') }}" required>
         </div>
     </div>
 {{-- Pilih Pelanggan --}}
-    <div class="row mb-3">
+    <div class="row mb-1">
       <label class="col-sm-2 col-form-label">Pelanggan:</label>
       <div class="col-sm-3">
         <select id="kode_pelanggan" name="kode_pelanggan" class="form-control">
           <option value="" disabled selected>Pilih Pelanggan</option>
         </select>
       </div>
-      <label class="col-sm-2 col-form-label">Nama Pelanggan:</label>
+      <label class="col-sm-2 col-form-label hide-mobile">Nama Pelanggan:</label>
       <div class="col-sm-3">
-        <input type="text" id="nama_pelanggan" name="nama_pelanggan" class="form-control" readonly>
+        <input type="text" id="nama_pelanggan" name="nama_pelanggan" class="form-control hide-mobile" readonly>
       </div>
     </div>
 
     {{-- Alamat & Telepon --}}
-    <div class="row mb-3">
+    <div class="row mb-1">
       <label class="col-sm-2 col-form-label">Alamat:</label>
       <div class="col-sm-3">
         <input type="text" id="alamat" class="form-control" readonly>
       </div>
-      <label class="col-sm-2 col-form-label">Telepon:</label>
+      <label class="col-sm-2 col-form-label hide-mobile">Telepon:</label>
       <div class="col-sm-3">
-        <input type="text" id="telepon" class="form-control" readonly>
+        <input type="text" id="telepon" class="form-control hide-mobile" readonly>
       </div>
     </div>
 
-    <<div id="items-container">
+    <div id="items-container">
     <h3>Items</h3>
     <div class="table-responsive">
         <table class="table">
@@ -78,7 +78,7 @@
                 <tr>
                     <th class="px-2 py-1 border">Kode Barang</th>
                     <th class="px-2 py-1 border">Nama Barang</th>
-                    <th class="px-2 py-1 border">Harga</th>
+                    <th class="px-2 py-1 border hide-mobile">Harga</th>
                     <th class="px-2 py-1 border">Dus</th>
                     <th class="px-2 py-1 border">Lsn</th>
                     <th class="px-2 py-1 border">Pcs</th>
@@ -137,7 +137,7 @@ $(function(){
           data-nama="${p.Nama_pelanggan}"
           data-alamat="${p.alamat}"
           data-telepon="${p.telepon}">
-          ${p.Kode_pelanggan} – ${p.Nama_pelanggan}
+          ${p.Nama_pelanggan}
         </option>`;
       });
       $('#kode_pelanggan').html(opts);
@@ -162,7 +162,7 @@ function initializeSelect2() {
     $('.kode-barang-select').select2({
       placeholder: 'Cari kode barang…',
       ajax: {
-        url: '/masterbarang/search',
+        url: '/barang/search',
         dataType: 'json',
         delay: 250,
         data: params => ({ q: params.term }),
@@ -171,7 +171,7 @@ function initializeSelect2() {
             id: item.kode_barang,
             text: `${item.kode_barang} – ${item.nama_barang}`,
             nama_barang: item.nama_barang,
-            harga: item.hargapcsjual,
+            harga: item.nilairp,
             isidus: item.isidus
           }))
         }),
@@ -207,14 +207,15 @@ function addNewItem() {
                 <option value="">Pilih Barang</option>
             </select>
         </td>    
-        <td><input type="text" name="items[${index}][nama_barang]" class="form-control" style="max-width: 150px font-size: 9px;" readonly></td>
-        <td><input type="number" name="items[${index}][harga]" class="form-control" style="font-size: 10px;" readonly></td>
-        <td><input type="number" name="items[${index}][dus]" class="form-control" oninput="updateTotal(${index})" value = 0 required style="font-size: 8px;"></td>
-        <td><input type="number" name="items[${index}][lsn]" class="form-control" oninput="updateTotal(${index})" value = 0 required style="font-size: 8px;"></td>
-        <td><input type="number" name="items[${index}][pcs]" class="form-control" oninput="updateTotal(${index})" value = 0 required style="font-size: 8px;"></td>
+
+        <td><input type="text" name="items[${index}][nama_barang]" class="form-control" style="font-size: 6px;" readonly></td>
+         <td class="border hide-mobile"><input type="hidden" name="items[${index}][harga]" class="form-control" style="font-size: 6px;" readonly></td>
+        <td><input type="number" name="items[${index}][dus]" class="form-control" oninput="updateTotal(${index})" value = 0 required style="font-size: 7px;"></td>
+        <td><input type="number" name="items[${index}][lsn]" class="form-control" oninput="updateTotal(${index})" value = 0 required style="font-size: 7px;"></td>
+        <td><input type="number" name="items[${index}][pcs]" class="form-control" oninput="updateTotal(${index})" value = 0 required style="font-size: 7px;"></td>
         <td class="border hide-mobile"><input type="hidden" name="items[${index}][isidus]" class="form-control" readonly style="font-size: 8px;"></td>
         <td class="border hide-mobile"><input type="hidden" name="items[${index}][quantity]" class="form-control" readonly style="font-size: 8px;"></td>
-        <td><input type="number" name="items[${index}][jumlah]" class="form-control" readonly style="font-size: 8px;"></td>
+        <td><input type="number" name="items[${index}][jumlah]" class="form-control" readonly style="font-size: 7px;"></td>
         <td><button type="button" class="btn btn-danger" onclick="deleteRow(this)">Hapus</button></td>
     </tr>`;
 $('#items-body').append(row);8
@@ -264,7 +265,7 @@ function initializeSelect2() {
     $('.kode-barang-select').select2({
     placeholder: 'Cari kode barang atau nama...',
     ajax: {
-      url: '/masterbarang/search',
+      url: '/barang/search',
       dataType: 'json',
       delay: 250,
       data: params => ({ q: params.term }),
@@ -273,7 +274,7 @@ function initializeSelect2() {
           id: item.kode_barang,
           text: `${item.kode_barang} – ${item.nama_barang}`,
           nama_barang: item.nama_barang,
-          harga: item.hargapcsjual,
+          harga: item.nilairp,
           isidus: item.isidus
         }))
       }),
@@ -502,7 +503,7 @@ function deleteRow(button) {
   /* Ukuran font kecil di mobile */
   @media (max-width: 768px) {
     table.table th, table.table td {
-      font-size: 10px !important;
+      font-size: 9px !important;
       padding: 4px !important;
     }
 
@@ -514,7 +515,7 @@ function deleteRow(button) {
     /* Kecilkan tombol */
     #add-item,
     .btn {
-      font-size: 12px;
+      font-size: 9px;
       padding: 5px 10px;
     }
   }
@@ -534,12 +535,12 @@ function deleteRow(button) {
 
     /* Menyesuaikan lebar input di dalam tabel */
     .form-control {
-        font-size: 12px; /* Ukuran font kecil agar lebih pas */
+       
         padding: 5px; /* Padding agar lebih rapi */
     }
      @media (max-width: 576px) {
     label.form-label {
-      font-size: 13px;
+      font-size: 10px;
     }
       .kode-barang-column {
         max-width: 100px; /* Ubah sesuai kebutuhan */
@@ -549,20 +550,20 @@ function deleteRow(button) {
      .kode-barang-select {
         width: 500% !important;
         min-width: 50px; /* Sesuaikan dengan kebutuhan */
-        font-size: 8px;
+        font-size: 6px;
     }
 
     input, select, button {
       font-size: 8px;
     }
      .form-control {
-        font-size: 8px; /* Ukuran font kecil agar lebih pas */
+      
         padding: 5px; /* Padding agar lebih rapi */
     }
 
     .btn {
       padding: 8px 12px;
-      font-size: 8px;
+      font-size: 9px;
     }
   }
 </style>

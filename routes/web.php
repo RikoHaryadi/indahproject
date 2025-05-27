@@ -58,7 +58,8 @@ Route::middleware('no.cache')->group(function(){
                Route::post('/po',         [PoController::class,'store'])->name('po.store');
                Route::get('/api/po/{id}', [PoController::class,'getPOData']);
                Route::get('/po/{id}',     [PoController::class,'show'])->name('po.show');
-               Route::get('/penjualan/daftarso',      [PoController::class,'daftar'])->name('penjualan.daftarso');
+               Route::delete('/so/{id}', [SoController::class, 'destroy'])->name('po.destroy');
+
 
                // (Optional) jika masih pakai wizard select‐sales
                Route::get('/po/select-sales',       [PoController::class,'selectSales'])->name('po.select-sales');
@@ -122,6 +123,8 @@ Route::middleware('no.cache')->group(function(){
      Route::get('/kodeakun',                 [AkunController::class,'index'])->name('akuntan.kodeakun');
      Route::post('/kodeakun',                [AkunController::class,'store'])->name('kodeakun.store');
      Route::delete('/kodeakun/{kode_akun}',  [AkunController::class,'destroy'])->name('kodeakun.destroy');
+     
+
 
      Route::get('/bukubesar',                [BukubesarController::class,'index'])->name('akuntan.bukubesar');
 

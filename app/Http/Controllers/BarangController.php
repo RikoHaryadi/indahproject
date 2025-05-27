@@ -117,7 +117,7 @@ public function storeJual(Request $request)
         $data = Barang::where('kode_barang', 'like', "%{$q}%")
                       ->orWhere('nama_barang', 'like', "%{$q}%")
                       ->limit(20)
-                      ->get(['kode_barang', 'nama_barang', 'harga', 'isidus', 'stok']);
+                      ->get(['kode_barang', 'nama_barang', 'harga', 'isidus', 'stok', 'nilairp']);
 
         return response()->json($data);
     }
