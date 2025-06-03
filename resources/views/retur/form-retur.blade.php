@@ -37,24 +37,35 @@
         <input type="hidden" name="penjualan_id" id="penjualan_id" value="{{ old('penjualan_id') }}">
         <div id="detail-penjualan" style="display: none;">
             <table class="table table-bordered table-sm">
-                <thead class="table-light">
-                    <tr>
-                        <th>#</th>
-                        <th>Kode Barang</th>
-                        <th>Nama Barang</th>
-                        <th>Harga</th>
-                        <th>Dus</th>
-                        <th>Lusin</th>
-                        <th>Pcs</th>
-                        <th>Retur Dus</th>
-                        <th>Retur Lusin</th>
-                        <th>Retur Pcs</th>
-                        <th>Isi Dus</th>
-                        <th>Qty (Total PCS)</th>
-                    </tr>
-                </thead>
+               <thead class="table-light">
+    <tr style="font-size: 10px">
+        <th>#</th>
+        <th>Kode Barang</th>
+        <th>Nama Barang</th>
+        <th>Harga</th>
+        <th>Disc1 (%)</th>
+        <th>Disc2 (%)</th>
+        <th>Disc3 (%)</th>
+        <th>Disc4 (%)</th>
+        <th>Dus</th>
+        <th>Lusin</th>
+        <th>Pcs</th>
+        <th>Retur Dus</th>
+        <th>Retur Lusin</th>
+        <th>Retur Pcs</th>
+        <th>Isi Dus</th>
+        <th>Qty (Total PCS)</th>
+    </tr>
+</thead>
+
                 <tbody id="items-body-retur"></tbody>
             </table>
+            <div class="mt-3">
+    <h5>Rangkuman Retur:</h5>
+    <p><strong>Total Diskon:</strong> <span id="total-diskon">Rp 0</span></p>
+    <p><strong>Total Retur Setelah Diskon:</strong> <span id="total-retur">Rp 0</span></p>
+</div>
+
             <button type="submit" class="btn btn-success mt-3">Proses Retur</button>
         </div>
     </form>
@@ -101,6 +112,7 @@ $(document).ready(function() {
             $('#penjualan_id').val(header.id);
             $('#detail-penjualan').show();
             populateDetailItems(details);
+            
         });
     });
 
@@ -128,28 +140,69 @@ $(document).ready(function() {
             const isError = det.kode_barang === "{{ session('fokus_kode') }}";
 
             var row = `<tr data-kode="${det.kode_barang}" class="${isError ? 'row-error' : ''}">
-                <td>${idx + 1}</td>
+                <td style="font-size: 10px">${idx + 1}</td>
                 <td><input type="hidden" name="items[${idx}][detail_id]" value="${det.id}">
                     <input type="text" name="items[${idx}][kode_barang]" class="form-control form-control-sm" value="${det.kode_barang}" readonly></td>
                 <td><input type="text" name="items[${idx}][nama_barang]" class="form-control form-control-sm" value="${det.nama_barang}" readonly></td>
                 <td><input type="number" name="items[${idx}][harga]" class="form-control form-control-sm" value="${det.harga}" readonly></td>
+                 <td><input type="number" name="items[${idx}][disc1]" class="form-control form-control-sm" value="${det.disc1 ?? 0}" readonly></td>
+                <td><input type="number" name="items[${idx}][disc2]" class="form-control form-control-sm" value="${det.disc2 ?? 0}" readonly></td>
+                <td><input type="number" name="items[${idx}][disc3]" class="form-control form-control-sm" value="${det.disc3 ?? 0}" readonly></td>
+                <td><input type="number" name="items[${idx}][disc4]" class="form-control form-control-sm" value="${det.disc4 ?? 0}" readonly></td>
                 <td><input type="number" name="items[${idx}][dus]" class="form-control form-control-sm" value="${det.dus}" readonly></td>
                 <td><input type="number" name="items[${idx}][lusin]" class="form-control form-control-sm" value="${det.lusin}" readonly></td>
                 <td><input type="number" name="items[${idx}][pcs]" class="form-control form-control-sm" value="${det.pcs}" readonly></td>
-
                 <td>
-  <input type="number" name="items[${idx}][retur_dus]" class="form-control form-control-sm ${isError ? 'is-invalid' : ''}" min="0" value="${det.retur_dus ?? 0}">
-  ${isError ? `<div class="invalid-feedback d-block">Retur melebihi jumlah</div>` : ''}
-</td>
+                    <input type="number" name="items[${idx}][retur_dus]" class="form-control form-control-sm ${isError ? 'is-invalid' : ''}" min="0" value="${det.retur_dus ?? 0}">
+                    ${isError ? `<div class="invalid-feedback d-block">Retur melebihi jumlah</div>` : ''}
+                </td>
                 <td><input type="number" name="items[${idx}][retur_lusin]" class="form-control form-control-sm ${isError ? 'is-invalid' : ''}" min="0" value="${det.retur_lusin ?? 0}"></td>
                 <td><input type="number" name="items[${idx}][retur_pcs]" class="form-control form-control-sm ${isError ? 'is-invalid' : ''}" min="0" value="${det.retur_pcs ?? 0}"></td>
-
                 <td><input type="number" name="items[${idx}][isidus]" class="form-control form-control-sm" value="${det.isidus}" readonly></td>
                 <td><input type="number" name="items[${idx}][quantity]" class="form-control form-control-sm" value="${totalQty}" readonly title="Max Retur: ${totalQty} pcs"></td>
             </tr>`;
             $tbody.append(row);
         });
+        calculateTotals();
     }
+    function calculateTotals() {
+    let totalDiskon = 0;
+    let totalReturSetelahDiskon = 0;
+
+    $('#items-body-retur tr').each(function() {
+        const harga = parseFloat($(this).find('[name$="[harga]"]').val()) || 0;
+        const qtyRetur = (
+            (parseInt($(this).find('[name$="[retur_dus]"]').val()) || 0) * parseInt($(this).find('[name$="[isidus]"]').val()) +
+            (parseInt($(this).find('[name$="[retur_lusin]"]').val()) || 0) * 12 +
+            (parseInt($(this).find('[name$="[retur_pcs]"]').val()) || 0)
+        );
+
+        const disc1 = parseFloat($(this).find('[name$="[disc1]"]').val()) || 0;
+        const disc2 = parseFloat($(this).find('[name$="[disc2]"]').val()) || 0;
+        const disc3 = parseFloat($(this).find('[name$="[disc3]"]').val()) || 0;
+        const disc4 = parseFloat($(this).find('[name$="[disc4]"]').val()) || 0;
+
+        let subtotal = harga * qtyRetur;
+        let diskon = subtotal;
+
+        [disc1, disc2, disc3, disc4].forEach(d => {
+            diskon = diskon - (diskon * (d / 100));
+        });
+
+        const diskonNilai = subtotal - diskon;
+
+        totalDiskon += diskonNilai;
+        totalReturSetelahDiskon += diskon;
+    });
+
+    $('#total-diskon').text(`Rp ${totalDiskon.toLocaleString()}`);
+    $('#total-retur').text(`Rp ${totalReturSetelahDiskon.toLocaleString()}`);
+}
+ // Jika ada perubahan jumlah retur, hitung ulang
+    $(document).on('input', '[name$="[retur_dus]"], [name$="[retur_lusin]"], [name$="[retur_pcs]"]', function() {
+        calculateTotals();
+    });
+    
 
     // Jika sebelumnya gagal retur → reload detail otomatis
     @if (old('penjualan_id') && old('items'))
@@ -195,6 +248,8 @@ $(document).ready(function() {
         }, 1000);
     @endif
 });
+
+
 </script>
 
 <style>
@@ -205,6 +260,9 @@ $(document).ready(function() {
     input.is-invalid {
         border-color: red;
         background-color: #fff5f5;
+    }
+    .form-control {
+        font-size: 10px;
     }
 </style>
 @endsection

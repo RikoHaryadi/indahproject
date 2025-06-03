@@ -108,7 +108,7 @@ class PenjualanImportController extends Controller
 
                 // hitung total per faktur
                 $sumGross = $items->sum(fn($i) => $this->parseNumber($i['GROSS']));
-                $sumDisc  = $items->sum(fn($i) => $this->parseNumber($i['Discount']));
+                $sumDisc  = $items->sum(fn($i) => $this->parseNumber($i['DISCX']));
                 $sumPpn   = $items->sum(fn($i) => $this->parseNumber($i['PPN']));
                 $sumNet   = $items->sum(fn($i) => $this->parseNumber($i['Net']));
 

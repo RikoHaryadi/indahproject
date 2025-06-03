@@ -39,4 +39,9 @@ class ReturDetail extends Model
     {
         return $this->belongsTo(Retur::class, 'retur_id');
     }
+    public function penjualanDetail()
+{
+    return $this->belongsTo(PenjualanDetail::class, 'kode_barang', 'kode_barang')
+                ->where('no_faktur', $this->no_faktur);
+}
 }

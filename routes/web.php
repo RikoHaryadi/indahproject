@@ -167,6 +167,14 @@ Route::post('/retur-penjualan', [ReturController::class, 'processRetur'])
 Route::get('/penjualan/search-faktur', [PenjualanController::class, 'searchFaktur'])
      ->name('penjualan.search-faktur');
 Route::get('/retur-penjualan/details/{id}', [ReturController::class, 'getPenjualanDetails']);
+Route::get('/retur/daftar', [ReturController::class, 'daftarRetur'])->name('retur.daftar');
+
+// Cetak dan Cancel (placeholder, bisa disesuaikan)
+Route::get('/retur/cetak/{id}', [ReturController::class, 'cetak'])->name('retur.cetak');
+Route::delete('/retur/cancel/{id}', [ReturController::class, 'cancel'])->name('retur.cancel');
+Route::post('/retur/batalkan/{id}', [ReturController::class, 'batalkan'])->name('retur.batalkan');
+
+
 
 
     
