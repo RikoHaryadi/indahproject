@@ -19,5 +19,9 @@ class Piutang extends Model
         'sisapiutang',
         'created_at'
     ];
+    public function pelanggan()
+{
+    return $this->belongsTo(Pelanggan::class, 'kode_pelanggan', 'kode_pelanggan');
+}
 
 }

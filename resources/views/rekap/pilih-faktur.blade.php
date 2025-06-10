@@ -12,19 +12,16 @@
     <input type="date" name="tanggal_sampai" value="{{ request('tanggal_sampai') }}" required>
 
     <label>Sales:</label>
-    <select name="kode_sales" required>
-        <option value="">-- Pilih Sales --</option>
-        @foreach($salesList as $salesItem)
-            <!--
-                Ganti nama field jadi "kode_sales" (bukan "nama_sales"),
-                dan gunakan value dari $salesItem->kode_sales (bukan kode_pelanggan).
-            -->
-            <option value="{{ $salesItem->kode_sales }}"
-                {{ request('kode_sales') == $salesItem->kode_sales ? 'selected' : '' }}>
-                {{ $salesItem->nama_salesman }}
-            </option>
-        @endforeach
-    </select>
+  <select name="kode_sales" required>
+    <option value="">-- Pilih Sales --</option>
+    <option value="all" {{ request('kode_sales') == 'all' ? 'selected' : '' }}>-- Semua Sales --</option>
+    @foreach($salesList as $salesItem)
+        <option value="{{ $salesItem->kode_sales }}"
+            {{ request('kode_sales') == $salesItem->kode_sales ? 'selected' : '' }}>
+            {{ $salesItem->nama_salesman }}
+        </option>
+    @endforeach
+</select>
 
     <button type="submit">Filter</button>
 </form>

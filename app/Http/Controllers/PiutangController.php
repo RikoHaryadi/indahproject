@@ -208,5 +208,25 @@ public function showCariEdit(Request $request)
 
     return view('dt.cari_edit', compact('dt'));
 }
+public function indexPiutang(Request $request)
+{
+    $query = Piutang::query();
 
+     // Filter berdasarkan kode pelanggan
+    if ($request->filled('kode_pelanggan')) {
+        $query->where('kode_pelanggan', $request->kode_pelanggan);
+    }
+
+    if ($request->filled('jatuh_tempo')) {
+        $tanggalFilter = Carbon::parse($request->jatuh_tempo);
+        $query->whereHas('pelanggan', function ($q) use ($tanggalFilter) {
+            $q->whereRaw('DATE_ADD(piutang.tanggal, INTERVAL pelanggan.top DAY) <= ?', [$tanggalFilter->toDateString()]);
+        });
+    }
+
+    $piutangList = $query->orderBy('created_at')->get();
+    $pelangganList = Pelanggan::orderBy('nama_pelanggan')->get();
+
+    return view('piutang.index', compact('piutangList', 'pelangganList'));
+}
 }

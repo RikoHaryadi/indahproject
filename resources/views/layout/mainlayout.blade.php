@@ -87,7 +87,8 @@
             <li><a class="dropdown-item" href="/penjualan/daftar">Daftar Transaksi</a></li>
             <li><a class="dropdown-item" href="/rekap/pilih-faktur">Buat Rekap Faktur</a></li>
             <li><a class="dropdown-item" href="/retur-penjualan">Retur</a></li>
-            <li><a class="dropdown-item" href="#">Daftar Retur</a></li>
+            <li><a class="dropdown-item" href="/retur-bebas">Retur Bebas</a></li>
+            <li><a class="dropdown-item" href="/retur/daftar">Daftar Retur</a></li>
           </ul>
         </li>
         <li class="nav-item dropdown">
@@ -99,10 +100,16 @@
             <li><a class="dropdown-item" href="/grn/daftar">Daftar Transaksi</a></li>
             <li><a class="dropdown-item" href="#">Retur GRN</a></li>
             <li><a class="dropdown-item" href="#">Daftar Retur</a></li>
+            <li><a class="dropdown-item" href="/grn/import">Import CSV</a></li>
           </ul>
         </li>
-        <li class="nav-item">
-          <a class="nav-link" href="/pembayaran">AR</a>
+         <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            AR
+          </a>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="/datapiutang">Data Piutang</a></li>
+          </ul>
         </li>
        <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">

@@ -9,6 +9,7 @@ use App\Models\Barang;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB; 
 use App\Models\Pelanggan;
+use App\Models\Piutang;
 
 class PenjualanImportController extends Controller
 {
@@ -19,9 +20,18 @@ class PenjualanImportController extends Controller
 
     private function parseNumber(string $s): float
     {
-        // Hilangkan titik ribuan, ganti koma desimal dengan titik
-        $clean = str_replace(['.', ','], ['', '.'], $s);
-        return floatval($clean);
+         // Hapus spasi
+    $s = trim($s);
+
+    // Cek apakah string mengandung koma (,) sebagai desimal
+    if (strpos($s, ',') !== false && strpos($s, '.') === false) {
+        // Format Eropa: ribuan pakai titik, desimal pakai koma (misal: 21.642,78)
+        $s = str_replace('.', '', $s); // hapus titik ribuan
+        $s = str_replace(',', '.', $s); // ubah koma desimal jadi titik
+    }
+
+    // Jika format sudah benar (misal 21642.78), biarkan
+    return floatval($s);
     }
 
     public function importCsv(Request $request)
@@ -121,6 +131,15 @@ class PenjualanImportController extends Controller
                     'nama_pelanggan' => $first['Outlet Name'],
                     'total_discount' => $sumDisc,
                     'total'          => $sumNet,
+                    'created_at'     => $tgl,
+                ]);
+                  Piutang::create([
+                    'id_faktur'      => $inv,
+                    'kode_pelanggan' => $first['Outlet'],
+                    'nama_pelanggan' => $first['Outlet Name'],
+                    'total'          => $sumNet,
+                    'pembayaran'     => 0,
+                    'sisapiutang'     => $sumNet,
                     'created_at'     => $tgl,
                 ]);
 

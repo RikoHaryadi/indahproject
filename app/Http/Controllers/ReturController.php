@@ -107,15 +107,21 @@ class ReturController extends Controller
                     $returLusin = intval($item['retur_lusin']);
                     $returPcs   = intval($item['retur_pcs']);
 
-                    $isidus = optional($detailAsli->barang)->isidus ?? 1;
-                    $quantityAsli = $detailAsli->quantity;
-                    $quantityRetur = $returDus * $isidus + $returLusin * 12 + $returPcs;
+                 $isidus = optional($detailAsli->barang)->isidus ?? 1;
 
-                    $returSebelumnya = ReturDetail::where('kode_barang', $detailAsli->kode_barang)
-                        ->whereHas('retur', function ($query) use ($request) {
-                            $query->where('id_faktur', Penjualan::find($request->penjualan_id)->id_faktur);
-                        })
-                        ->sum('quantityretur');
+// Hitung total quantity barang berdasarkan seluruh data dengan penjualan_id yang sama
+$quantityAsli = PenjualanDetail::where('penjualan_id', $penj->id)
+    ->where('kode_barang', $detailAsli->kode_barang)
+    ->sum('quantity');
+
+$quantityRetur = $returDus * $isidus + $returLusin * 12 + $returPcs;
+
+// Hitung total retur sebelumnya dari semua retur yang mengacu ke faktur ini
+$returSebelumnya = ReturDetail::where('kode_barang', $detailAsli->kode_barang)
+    ->whereHas('retur', function ($query) use ($penj) {
+        $query->where('id_faktur', $penj->id_faktur);
+    })
+    ->sum('quantityretur');
 
                     $kodeBarangError = $detailAsli->kode_barang;
 
@@ -273,5 +279,139 @@ public function batalkan($id)
     }
 }
 
+public function simpanReturBebas(Request $request)
+{
+    Log::info('Masuk ke proses retur bebas!');
+    $kodeBarangError = null;
 
+    $request->validate([
+        'kode_sales'      => 'required|string',
+        'nama_sales'      => 'required|string',
+        'kode_pelanggan'  => 'required|string',
+        'nama_pelanggan'  => 'required|string',
+        'items'           => 'required|array',
+        'items.*.kode_barang' => 'required|exists:barang,kode_barang',
+        'items.*.nama_barang' => 'required|string',
+        'items.*.harga'       => 'required|numeric|min:0',
+        'items.*.dus'         => 'required|integer|min:0',
+        'items.*.lsn'         => 'required|integer|min:0',
+        'items.*.pcs'         => 'required|integer|min:0',
+    ]);
+
+    try {
+        DB::transaction(function () use ($request, &$kodeBarangError) {
+            $timestamp = Carbon::now()->format('YmdHis');
+            $idRetur = 'RT-' . $timestamp;
+
+            $totalRetur = 0;
+            $totalDiscountRetur = 0;
+
+            $retur = Retur::create([
+                'id_retur'        => $idRetur,
+                'id_faktur'       => 'bebas',
+                'kode_sales'      => $request->kode_sales,
+                'nama_sales'      => $request->nama_sales,
+                'kode_pelanggan'  => $request->kode_pelanggan,
+                'nama_pelanggan'  => $request->nama_pelanggan,
+                'total_discount'  => 0,
+                'total'           => 0,
+            ]);
+
+            foreach ($request->items as $item) {
+                $kodeBarangError = $item['kode_barang'];
+
+                $barang = Barang::where('kode_barang', $item['kode_barang'])->first();
+                $isidus = $barang->isidus ?? 1;
+
+                $harga = floatval($item['harga']);
+                $dus   = intval($item['dus']);
+                $lsn   = intval($item['lsn']);
+                $pcs   = intval($item['pcs']);
+
+                $quantityRetur = ($dus * $isidus) + ($lsn * 12) + $pcs;
+                $jumlahRetur   = $harga * $quantityRetur;
+
+                $disc1 = floatval($item['disc1'] ?? 0);
+                $disc2 = floatval($item['disc2'] ?? 0);
+                $disc3 = floatval($item['disc3'] ?? 0);
+                $disc4 = floatval($item['disc4'] ?? 0);
+
+                // Perhitungan diskon bertingkat
+                $discAmount1 = $jumlahRetur * ($disc1 / 100);
+                $afterDisc1  = $jumlahRetur - $discAmount1;
+
+                $discAmount2 = $afterDisc1 * ($disc2 / 100);
+                $afterDisc2  = $afterDisc1 - $discAmount2;
+
+                $discAmount3 = $afterDisc2 * ($disc3 / 100);
+                $afterDisc3  = $afterDisc2 - $discAmount3;
+
+                $discAmount4 = $afterDisc3 * ($disc4 / 100);
+                $afterDisc4  = $afterDisc3 - $discAmount4;
+
+                $totalDiskon = $discAmount1 + $discAmount2 + $discAmount3 + $discAmount4;
+                $jumlahSetelahDiskon = $afterDisc4;
+
+                ReturDetail::create([
+                    'retur_id'      => $retur->id,
+                    'kode_barang'   => $item['kode_barang'],
+                    'nama_barang'   => $item['nama_barang'],
+                    'harga'         => $harga,
+                    'dus'           => 0,
+                    'lusin'         => 0,
+                    'pcs'           => 0,
+                    'quantity'      => 0,
+                    'dusretur'      => $dus,
+                    'lusinretur'    => $lsn,
+                    'pcsretur'      => $pcs,
+                    'quantityretur' => $quantityRetur,
+                    'jumlah'        => $jumlahSetelahDiskon,
+                    'created_at'    => Carbon::now()->format('Y-m-d'),
+                ]);
+
+                // Update stok barang
+                Barang::where('kode_barang', $item['kode_barang'])
+                    ->increment('stok', $quantityRetur);
+
+                $totalRetur += $jumlahSetelahDiskon;
+                $totalDiscountRetur += $totalDiskon;
+            }
+
+            $retur->update([
+                'total_discount' => $totalDiscountRetur,
+                'total'          => $totalRetur,
+            ]);
+        });
+
+        return redirect()->route('retur.form')->with('success', 'Retur bebas berhasil disimpan dan stok telah diupdate.');
+    } catch (\Exception $e) {
+        return redirect()->back()
+            ->withInput()
+            ->with('retur_error', $e->getMessage())
+            ->with('fokus_kode', $kodeBarangError);
+    }
+}
+
+public function showFormBebas()
+{
+     $user = auth()->user(); // pastikan autentikasi aktif
+    $userLevel = $user->level ?? null; // sesuaikan nama kolomnya di tabel users
+    $userSales = $user->kode_sales ?? null;
+
+    $salesmanList = Salesman::all();
+
+    return view('retur.form-retur-bebas', compact('userLevel', 'userSales', 'salesmanList'));
+  
+}
+public function search(Request $r)
+{
+    $sales = $r->get('salesman', '');
+    $query = Pelanggan::query();
+    if ($sales) {
+        $query->where('kode_sales', $sales);
+    }
+    // Jika ada parameter `q` untuk live‐search, bisa ditambahkan:
+    // if ($r->filled('q')) { … }
+    return response()->json($query->limit(20)->get());
+}
 }

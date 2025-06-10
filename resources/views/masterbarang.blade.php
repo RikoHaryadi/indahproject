@@ -2,8 +2,8 @@
 @section('title', 'Master Barang')
 
 @section('content')
-    <h1>Master Barang</h1>
-    <h3>Produk List</h3>
+    <h5>Master Barang</h5>
+   
 
     @if(session('success'))
         <p style="color: green;">{{ session('success') }}</p>
@@ -92,38 +92,38 @@
 
     
 <div class="d-flex justify-content-start">
-    <table class="table table-dark table-striped-columns" style="margin-top:20px; font-size: 12px;">
-        <thead>
-            <tr>
-                <th>No.</th>
-                <th>Kode Barang</th>
-                <th>Nama Barang</th>
-                <th>Harga beli/Pcs</th>
-                <th>Harga jual/Pcs</th>
-                <th>isi/Dus</th>
-                <th>Kategori</th>
-                <th>Action</th>
+   <table class="table table-bordered table-striped">
+        <thead class="table-dark" style="font-size: 12px;">
+            <tr style="font-size: 10px;">
+                <th style="font-size: 10px;">No.</th>
+                <th style="font-size: 10px;">Kode Barang</th>
+                <th style="font-size: 10px;">Nama Barang</th>
+                <th style="font-size: 10px;">Harga beli/Pcs</th>
+                <th style="font-size: 10px;">Harga jual/Pcs</th>
+                <th style="font-size: 10px;">isi/Dus</th>
+                <th style="font-size: 10px;">Kategori</th>
+                <th style="font-size: 10px;">Action</th>
             </tr>
         </thead>
         <tbody>
             @foreach($masterbarangList as $data)
             <tr>
-                <td>{{$loop->iteration}}</td>
-                <td>{{$data->kode_barang}}</td>
-                <td>{{$data->nama_barang}}</td>
-                <td>{{$data->hargapcs}}</td>
-                <td>{{$data->hargapcsjual}}</td>
-                <td>{{$data->isidus}}</td>
-                <td>{{$data->kategori}}</td>
-                <td>
+                <td style="font-size: 10px;">{{$loop->iteration}}</td>
+                <td style="font-size: 10px;">{{$data->kode_barang}}</td>
+                <td style="font-size: 10px;">{{$data->nama_barang}}</td>
+                <td style="font-size: 10px;">{{$data->hargapcs}}</td>
+                <td style="font-size: 10px;">{{$data->hargapcsjual}}</td>
+                <td style="font-size: 10px;">{{$data->isidus}}</td>
+                <td style="font-size: 10px;">{{$data->kategori}}</td>
+                <td style="font-size: 10px;">
                     <!-- Tombol Edit -->
-                    <a href="{{ route('masterbarang.edit', $data->kode_barang) }}" class="btn btn-warning">Edit</a>
+                    <a href="{{ route('masterbarang.edit', $data->kode_barang) }}" class="btn btn-warning" style="font-size: 10px;">Edit</a>
 
                     <!-- Tombol Delete -->
                     <form action="{{ route('masterbarang.destroy', $data->kode_barang) }}" method="POST" style="display:inline;">
                         @csrf
                         @method('DELETE')
-                        <button type="submit" class="btn btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus barang ini?')">Delete</button>
+                        <button type="submit" class="btn btn-danger" style="font-size: 10px;" onclick="return confirm('Apakah Anda yakin ingin menghapus barang ini?')">Delete</button>
                     </form>
                 </td>
             </tr>
@@ -131,6 +131,10 @@
         </tbody>
     </table>
 </div>
-
+<style>
+    .btn {
+        style="font-size: 10px;"
+    }
+</style>
 
 @endsection

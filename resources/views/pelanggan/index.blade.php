@@ -2,17 +2,19 @@
 @section('title', 'Master Pelanggan')
 
 @section('content')
-    <h1>Master Pelanggan</h1>
+    <h5>Master Pelanggan</h5>
 
     @if(session('success'))
         <p style="color: green;">{{ session('success') }}</p>
     @endif
-
-    <!-- Tombol Add Pelanggan -->
-    <button onclick="document.getElementById('addPelangganForm').style.display='block'" class="btn btn-success">Add Pelanggan</button>
+<a href="{{ route('pelanggan.export.excel') }}"
+    
+      <button class="btn btn-success mb-3" style="font-size: 12px;">Export To Excel</button> </a>
+    <button onclick="document.getElementById('addPelangganForm').style.display='block'" class="btn btn-success mb-3" style="font-size: 12px;">Add Pelanggan</button>
 
     <!-- Tombol Import CSV -->
-    <button onclick="document.getElementById('importCSVForm').style.display='block'" class="btn btn-primary">Import CSV</button>
+    <button onclick="document.getElementById('importCSVForm').style.display='block'" class="btn btn-primary mb-3" style="font-size: 10px;">Import CSV</button>
+    
 
     <!-- Form Import CSV -->
     <div id="importCSVForm" style="display: none; margin-top: 20px;">
@@ -91,12 +93,12 @@
     </div>
 
     <!-- Tabel Data Pelanggan -->
-    <table class="table table-success table-striped" style="margin-top:20px; font-size: 12px;">
-        <thead>
+    <table class="table table-bordered table-striped">
+        <thead class="table-dark" style="font-size: 10px;">
         <tr style="font-size: 10px;">
-                <th>Kode Pelanggan</th>
+                <th style="width: 80px;">Kode Pelanggan</th>
                 <th>Nama</th>
-                <th>Alamat</th>
+                <th style="width: 250px;">Alamat</th>
                 <th>Telepon</th>
                 <th>TOP</th>
                 <th>Kredit Limit</th>
@@ -118,13 +120,13 @@
                     <td>{{ $data->hari_kunjungan }}</td>
                     <td>
                         <!-- Tombol Edit -->
-                        <a href="{{ route('pelanggan.edit', $data->Kode_pelanggan) }}" class="btn btn-warning">Edit</a>
+                        <a href="{{ route('pelanggan.edit', $data->Kode_pelanggan) }}" class="btn btn-warning" style="font-size: 10px;">Edit</a>
 
                         <!-- Tombol Delete -->
                         <form action="{{ route('pelanggan.destroy', $data->Kode_pelanggan) }}" method="POST" style="display:inline;">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="btn btn-danger" onclick="return confirm('Apakah Anda yakin ingin menghapus Pelanggan ini?')">Delete</button>
+                            <button type="submit" class="btn btn-danger" style="font-size: 10px;" onclick="return confirm('Apakah Anda yakin ingin menghapus Pelanggan ini?')">Delete</button>
                         </form>
                     </td>
                 </tr>

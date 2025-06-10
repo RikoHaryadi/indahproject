@@ -9,6 +9,10 @@ use App\Models\Supplier;
 use App\Models\Barang;
 use App\Models\MasterBarang;
 use PDF;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
+use Carbon\Carbon;
 
 class GrnController extends Controller
 {
@@ -23,14 +27,6 @@ class GrnController extends Controller
 
     public function store(Request $request)
     {
-        
-        // foreach ($request->items as $item) {
-        //     $exists = \App\Models\Barang::where('kode_barang', $item['kode_barang'])->exists();
-        //     if (!$exists) {
-        //         dd("Kode barang {$item['kode_barang']} tidak ditemukan di tabel barang.");
-        //     }
-    //     \Log::info('Request Data:', $request->all()); // Log data request
-    // \DB::enableQueryLog(); // Mengaktifkan log query
         $data = $request->validate([
             'kode_suplier' => 'required',
             'nama_suplier' => 'required',
@@ -109,7 +105,7 @@ class GrnController extends Controller
         
             // Filter berdasarkan tanggal
             if ($request->filled('tanggal_dari') && $request->filled('tanggal_sampai')) {
-                $query->whereBetween('created_at', [
+                $query->whereBetween('date', [
                     $request->tanggal_dari . ' 00:00:00',
                     $request->tanggal_sampai . ' 23:59:59'
                 ]);
@@ -120,8 +116,118 @@ class GrnController extends Controller
                 $query->where('kode_suplier', $request->kode_suplier);
             }
         
-            $grn = $query->orderBy('created_at', 'desc')->get();
+            $grn = $query->orderBy('date', 'desc')->get();
         
             return view('grn.daftargrn', compact('grn'));
         }
+        public function formImport()
+{
+    return view('grn.import');
+}
+
+public function import(Request $request)
+{
+    $request->validate([
+        'file' => 'required|mimes:csv,txt',
+    ]);
+
+    $file = $request->file('file');
+    $path = $file->getRealPath();
+
+    $rows = array_map('str_getcsv', file($path));
+    
+    // Ubah delimiter ke ';' (karena file Anda pakai titik koma)
+    $rows = array_map(function($row) {
+        return str_getcsv(implode(';', $row), ';');
+    }, $rows);
+
+    if (count($rows) < 1) {
+        return back()->with('error', 'File CSV kosong atau tidak terbaca.');
+    }
+
+   $header = array_shift($rows); // Buang baris header
+    $firstRow = $rows[0]; // Ambil data baris pertama setelah header
+
+    // Validasi jumlah kolom minimal
+    if (count($firstRow) < 9) {
+        return back()->with('error', 'Format CSV tidak sesuai. Pastikan semua kolom tersedia.');
+    }
+
+    $noinvoice     = trim($firstRow[0]);
+    $dateInput     = trim($firstRow[1]);
+    $kode_suplier  = trim($firstRow[2]);
+    $nama_suplier  = trim($firstRow[3]);
+
+try {
+    $date = Carbon::parse($dateInput)->format('Y-m-d');
+} catch (\Exception $e) {
+    return back()->with('error', 'Format tanggal tidak valid.');
+}
+    $total = 0;
+    $details = [];
+
+    // Validasi kode_barang
+    foreach ($rows as $index => $row) {
+        $kode_barang = trim($row[4]);
+
+        if (!Barang::where('Kode_barang', $kode_barang)->exists()) {
+            return back()->with('error', "Kode barang '$kode_barang' pada baris ke-" . ($index+1) . " tidak tersedia di database.");
+        }
+
+        $jumlah = (float) str_replace(',', '', $row[8]);
+        $total += $jumlah;
+
+        $details[] = [
+            'kode_barang'  => trim($row[4]),
+            'nama_barang'  => trim($row[5]),
+            'harga'        => (float) str_replace(',', '', $row[6]),
+            'quantity'     => (int) $row[7],
+            'jumlah'       => $jumlah,
+        ];
+    }
+
+    // Simpan ke database
+    DB::beginTransaction();
+    try {
+        $grn = Grn::create([
+            'noinvoice'     => $noinvoice,
+            'kode_suplier'  => $kode_suplier,
+            'nama_suplier'  => $nama_suplier,
+            'total'         => $total,
+            'date'          => $date,
+        ]);
+
+        foreach ($details as $detail) {
+            Grndetail::create([
+                'grn_id'       => $grn->id,
+                'kode_barang'  => $detail['kode_barang'],
+                'nama_barang'  => $detail['nama_barang'],
+                'harga'        => $detail['harga'],
+                'quantity'     => $detail['quantity'],
+                'jumlah'       => $detail['jumlah'],
+            ]);
+             Barang::where('Kode_barang', $detail['kode_barang'])->increment('stok', $detail['quantity']);
+        }
+
+        DB::commit();
+        return back()->with('success', 'Impor GRN berhasil.');
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return back()->with('error', 'Terjadi kesalahan saat menyimpan data: ' . $e->getMessage());
+    }
+}
+
+//// Jangan Ditembak ////
+public function uploadTemplateGRN()
+{
+    $path = storage_path('app/public/template_import_grn.csv');
+
+    // Cek jika file belum ada, baru buat
+    if (!File::exists($path)) {
+        $header = "kode_suplier,nama_suplier,kode_barang,nama_barang,harga,quantity,jumlah\n";
+        File::put($path, $header);
+    }
+
+    return response()->download($path);
+}
 }

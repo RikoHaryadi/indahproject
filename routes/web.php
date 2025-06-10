@@ -64,12 +64,18 @@ Route::middleware('no.cache')->group(function(){
                // (Optional) jika masih pakai wizard select‐sales
                Route::get('/po/select-sales',       [PoController::class,'selectSales'])->name('po.select-sales');
                Route::post('/po/select-sales',      [PoController::class,'handleSelectSales'])->name('po.handle-select-sales');
+               Route::get('/pelanggan/export-excel', [PelangganController::class, 'exportExcel'])->name('pelanggan.export.excel');
+
                Route::get('/po/create',             [PoController::class,'create'])->name('po.create');
+              Route::get('/api/pelanggan', [PelangganController::class, 'searchBySales'])
+               ->name('api.pelanggan.search');
                Route::get('/pelanggan/search', [PelangganController::class,'search'])->name('pelanggan.search');
                Route::get('/masterbarang/search', [MasterBarangController::class,'search'])->name('masterbarang.search');
                Route::resource('pelanggan', PelangganController::class)
                ->parameters(['pelanggan'=>'Kode_pelanggan'])
                ->except('show');
+               Route::get('/stok/export', [BarangController::class, 'exportExcel'])->name('stok.export');
+
                Route::get('/barang',    [BarangController::class,'index'])->name('barang.index');
      
      Route::get('/penjualan',               [PenjualanController::class,'index'])->name('penjualan.index');
@@ -96,9 +102,14 @@ Route::middleware('no.cache')->group(function(){
      Route::post('/masterbarang/import',    [MasterBarangController::class,'importCSV'])->name('masterbarang.import');
      Route::get('/barang/search',           [BarangController::class,'search'])->name('barang.search');
      Route::get('/masterbarang/search',           [MasterBarangController::class,'search'])->name('masterbarang.search');
+     Route::get('/grn/daftar',               [GrnController::class,'daftar'])->name('grn.daftargrn');
+     Route::get('/grn/import', [GrnController::class, 'formImport'])->name('grn.import.form');
+   Route::post('/grn/import', [GrnController::class, 'import'])->name('grn.import');
+     Route::get('/grn/download-template', [GrnController::class, 'uploadTemplateGRN'])->name('grn.template');
+
      Route::resource('grn', GrnController::class)
           ->except(['edit','update','destroy']);
-     Route::get('/grn/daftar',               [GrnController::class,'daftar'])->name('grn.daftargrn');
+    
      Route::get('/grn/cetak/{id}',           [GrnController::class,'cetak'])->name('grn.cetak');
      Route::get('/grn/cetak-pdf/{id}',       [GrnController::class,'cetakPdf'])->name('grn.cetak-pdf');
      Route::post('/grn',         [GrnController::class,'store'])->name('grn.store');
@@ -139,7 +150,7 @@ Route::middleware('no.cache')->group(function(){
      Route::get('/dt/edit/{id}',             [PiutangController::class,'edit'])->name('dt.edit');
      Route::put('/dt/update/{id}',           [PiutangController::class,'update'])->name('dt.update');
      Route::get('/dt/cari-edit',             [PiutangController::class,'showCariEdit'])->name('dt.cari_edit');
-
+       Route::get('/datapiutang',             [PiutangController::class,'indexPiutang'])->name('piutang.index');
      // tampilkan form import
 Route::get('/penjualan/import', [App\Http\Controllers\PenjualanImportController::class, 'showForm'])
      ->name('penjualan.import.form');
@@ -156,6 +167,8 @@ Route::put('/penjualan/{id}', [PenjualanController::class, 'update'])
 // });
 // Menampilkan Form Retur Penjualan
 Route::get('/retur-penjualan', [ReturController::class, 'showForm'])->name('retur.form');
+Route::get('/retur-bebas', [ReturController::class, 'showFormBebas'])->name('retur.bebas');
+Route::post('/retur-bebas', [ReturController::class, 'simpanReturBebas'])->name('retur.bebas.simpan');
 
 // AJAX: Ambil detail penjualan (header + detail item) berdasar ID penjualan
 Route::get('/retur-penjualan/details-faktur/{id}', [ReturPenjualanController::class, 'getDetailFaktur']);
@@ -173,6 +186,7 @@ Route::get('/retur/daftar', [ReturController::class, 'daftarRetur'])->name('retu
 Route::get('/retur/cetak/{id}', [ReturController::class, 'cetak'])->name('retur.cetak');
 Route::delete('/retur/cancel/{id}', [ReturController::class, 'cancel'])->name('retur.cancel');
 Route::post('/retur/batalkan/{id}', [ReturController::class, 'batalkan'])->name('retur.batalkan');
+
 
 
 

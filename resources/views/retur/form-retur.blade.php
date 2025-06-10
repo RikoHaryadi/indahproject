@@ -64,6 +64,8 @@
     <h5>Rangkuman Retur:</h5>
     <p><strong>Total Diskon:</strong> <span id="total-diskon">Rp 0</span></p>
     <p><strong>Total Retur Setelah Diskon:</strong> <span id="total-retur">Rp 0</span></p>
+    <button type="button" id="btn-retur-full" class="btn btn-warning mt-2">Retur Full</button>
+
 </div>
 
             <button type="submit" class="btn btn-success mt-3">Proses Retur</button>
@@ -112,6 +114,7 @@ $(document).ready(function() {
             $('#penjualan_id').val(header.id);
             $('#detail-penjualan').show();
             populateDetailItems(details);
+            calculateTotals();
             
         });
     });
@@ -171,11 +174,13 @@ $(document).ready(function() {
 
     $('#items-body-retur tr').each(function() {
         const harga = parseFloat($(this).find('[name$="[harga]"]').val()) || 0;
-        const qtyRetur = (
-            (parseInt($(this).find('[name$="[retur_dus]"]').val()) || 0) * parseInt($(this).find('[name$="[isidus]"]').val()) +
-            (parseInt($(this).find('[name$="[retur_lusin]"]').val()) || 0) * 12 +
-            (parseInt($(this).find('[name$="[retur_pcs]"]').val()) || 0)
-        );
+        const isidus = parseInt($(this).find('[name$="[isidus]"]').val()) || 1;
+
+        const returDus = parseInt($(this).find('[name$="[retur_dus]"]').val()) || 0;
+        const returLusin = parseInt($(this).find('[name$="[retur_lusin]"]').val()) || 0;
+        const returPcs = parseInt($(this).find('[name$="[retur_pcs]"]').val()) || 0;
+
+        const qtyRetur = (returDus * isidus) + (returLusin * 12) + returPcs;
 
         const disc1 = parseFloat($(this).find('[name$="[disc1]"]').val()) || 0;
         const disc2 = parseFloat($(this).find('[name$="[disc2]"]').val()) || 0;
@@ -183,20 +188,19 @@ $(document).ready(function() {
         const disc4 = parseFloat($(this).find('[name$="[disc4]"]').val()) || 0;
 
         let subtotal = harga * qtyRetur;
-        let diskon = subtotal;
+        let afterDisc1 = subtotal - (subtotal * disc1 / 100);
+        let afterDisc2 = afterDisc1 - (afterDisc1 * disc2 / 100);
+        let afterDisc3 = afterDisc2 - (afterDisc2 * disc3 / 100);
+        let afterDisc4 = afterDisc3 - (afterDisc3 * disc4 / 100);
 
-        [disc1, disc2, disc3, disc4].forEach(d => {
-            diskon = diskon - (diskon * (d / 100));
-        });
+        let nilaiDiskon = subtotal - afterDisc4;
 
-        const diskonNilai = subtotal - diskon;
-
-        totalDiskon += diskonNilai;
-        totalReturSetelahDiskon += diskon;
+        totalDiskon += nilaiDiskon;
+        totalReturSetelahDiskon += afterDisc4;
     });
 
-    $('#total-diskon').text(`Rp ${totalDiskon.toLocaleString()}`);
-    $('#total-retur').text(`Rp ${totalReturSetelahDiskon.toLocaleString()}`);
+    $('#total-diskon').text(`Rp ${totalDiskon.toLocaleString('id-ID')}`);
+    $('#total-retur').text(`Rp ${totalReturSetelahDiskon.toLocaleString('id-ID')}`);
 }
  // Jika ada perubahan jumlah retur, hitung ulang
     $(document).on('input', '[name$="[retur_dus]"], [name$="[retur_lusin]"], [name$="[retur_pcs]"]', function() {
@@ -247,6 +251,46 @@ $(document).ready(function() {
             });
         }, 1000);
     @endif
+});
+
+// Tombol Retur Full
+$(document).on('click', '#btn-retur-full', function() {
+    $('#items-body-retur tr').each(function() {
+        const dus = parseInt($(this).find('[name$="[dus]"]').val()) || 0;
+        const lusin = parseInt($(this).find('[name$="[lusin]"]').val()) || 0;
+        const pcs = parseInt($(this).find('[name$="[pcs]"]').val()) || 0;
+
+        $(this).find('[name$="[retur_dus]"]').val(dus);
+        $(this).find('[name$="[retur_lusin]"]').val(lusin);
+        $(this).find('[name$="[retur_pcs]"]').val(pcs);
+    });
+
+    calculateTotals(); // update total retur
+});
+$('#btn-retur-full').on('click', function() {
+    Swal.fire({
+        title: 'Retur Semua Barang?',
+        text: "Semua barang akan diretur sesuai jumlah di faktur.",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Ya, Retur Semua',
+        cancelButtonText: 'Batal'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $('#items-body-retur tr').each(function() {
+                const dus = parseInt($(this).find('[name$="[dus]"]').val()) || 0;
+                const lusin = parseInt($(this).find('[name$="[lusin]"]').val()) || 0;
+                const pcs = parseInt($(this).find('[name$="[pcs]"]').val()) || 0;
+
+                $(this).find('[name$="[retur_dus]"]').val(dus);
+                $(this).find('[name$="[retur_lusin]"]').val(lusin);
+                $(this).find('[name$="[retur_pcs]"]').val(pcs);
+            });
+
+            // 🚀 Tambahkan ini agar total langsung dihitung ulang
+            calculateTotals();
+        }
+    });
 });
 
 

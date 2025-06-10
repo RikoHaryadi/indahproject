@@ -2,8 +2,7 @@
 @section('title', 'Stok')
 
 @section('content')
-    <h1>Ini Adalah Halaman Stok Barang</h1>
-    <h3>Produk List</h3>
+    <h1>Laporan Stok Barang</h1>
 
     @if(session('success'))
         <p style="color: green;">{{ session('success') }}</p>
@@ -16,14 +15,19 @@
 
     <!-- Modal Form -->
     
-    
+    <form action="{{ route('stok.export') }}" method="GET" style="margin-bottom: 15px;">
+    <button type="submit" class="btn btn-success">Export ke Excel</button>
+</form>
 <div class="d-flex justify-content-start">
+    <!-- Tombol Export ke Excel -->
+
     <table class="table table-dark table-striped-columns" style="margin-top:20px; font-size: 14px;">
         <thead>
             <tr>
                 <th>No.</th>
                 <th>Kode Barang</th>
                 <th>Nama Barang</th>
+                <th>Isi Dus</th>
                 <th>Harga</th>
                 <th>Stok Dus</th>
                 <th>Stok Lsn</th>
@@ -47,6 +51,7 @@
             <td>{{ $no++ }}</td>
                 <td>{{ $data->kode_barang }}</td>
                 <td>{{ $data->nama_barang }}</td>
+                <td>{{ $data->isidus }}</td>
                 <td>{{ number_format($data->nilairp, 2) }}</td>
                 <td>{{ $stok_dus }}</td>
                 <td>{{ $stok_lsn }}</td>
@@ -58,7 +63,7 @@
         </tbody>
         <tfoot>
             <tr>
-                <th colspan="7">Total Stok</th>
+                <th colspan="8">Total Stok</th>
                 <th>{{ number_format($totalNilaiStok, 2) }}</th>
             </tr>
         </tfoot>

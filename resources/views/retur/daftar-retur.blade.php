@@ -31,6 +31,7 @@
             </tr>
         </thead>
         <tbody>
+            @php $totalOmset = 0; @endphp
              @foreach ($returList as $no => $retur)
             <tr>
                 <td>{{ $no + 1 }}</td>
@@ -60,8 +61,22 @@
                     @endif
                 </td>
             </tr>
+             @php $totalOmset += $retur->total; @endphp
         @endforeach
     </tbody>
+          <tfoot>
+            <tr>
+                <th colspan="6">Total Retur</th>
+                <th>{{ number_format($totalOmset, 2) }}</th>
+                <th></th>
+                <th></th>
+            </tr>
+        </tfoot>
 </table>
 </div>
+<style>
+    .table-dark {
+        font-size: 12px;
+    }
+</style>
 @endsection

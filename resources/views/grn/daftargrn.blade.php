@@ -31,6 +31,7 @@
         <thead>
             <tr>
                 <th>ID</th>
+                <th>No Invoice</th>
                 <th>Tanggal</th>
                 <th>Kode Supplier</th>
                 <th>Nama Supplier</th>
@@ -45,7 +46,8 @@
             @foreach ($grn as $item)
             <tr>
                 <td>{{ $item->id }}</td>
-                <td>{{ \Carbon\Carbon::parse($item->created_at)->format('d-m-Y') }}</td>
+                <td>{{ $item->noinvoice }}</td>
+                <td>{{ \Carbon\Carbon::parse($item->date)->format('d-m-Y') }}</td>
                 <td>{{ $item->kode_suplier }}</td>
                 <td>{{ $item->nama_suplier }}</td>
                 <td>{{ number_format($item->total, 2) }}</td>

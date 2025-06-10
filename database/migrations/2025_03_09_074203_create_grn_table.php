@@ -15,10 +15,11 @@ return new class extends Migration
     {
         Schema::create('grn', function (Blueprint $table) {
             $table->id();
+            $table->string('noinvoice');
             $table->string('kode_suplier');
             $table->string('nama_suplier');
             $table->decimal('total', 15, 2);
-            $table->date('tanggal');
+            $table->date('date');
             $table->timestamps();
         });
     }

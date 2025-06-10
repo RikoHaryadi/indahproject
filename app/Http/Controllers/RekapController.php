@@ -49,7 +49,7 @@ class RekapController extends Controller
 
    public function pilihFaktur(Request $request)
 {
-    $salesList = Salesman::all(); // ambil semua data sales
+  $salesList = Salesman::all(); // ambil semua data sales
 
     $fakturs = [];
 
@@ -58,9 +58,14 @@ class RekapController extends Controller
         $sampai = $request->input('tanggal_sampai');
         $sales = $request->input('kode_sales');
 
-        $fakturs = Penjualan::whereBetween('created_at', [$dari, $sampai])
-                            ->where('kode_sales', $sales)
-                            ->get();
+        $query = Penjualan::whereBetween('created_at', [$dari, $sampai]);
+
+        // Jika yang dipilih bukan "all", filter berdasarkan kode_sales
+        if ($sales !== 'all') {
+            $query->where('kode_sales', $sales);
+        }
+
+        $fakturs = $query->get();
     }
 
     return view('rekap.pilih-faktur', compact('fakturs', 'salesList'));

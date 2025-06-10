@@ -30,8 +30,9 @@
     </form>
 
     {{-- Tabel Penjualan --}}
-    <table class="table table-bordered border-primary fs-8">
-        <thead>
+    <table class="table table-bordered table-hover table-striped">
+        <thead class="table-dark">
+        
             <tr>
                 <th>ID</th>
                 <th>ID Faktur</th>

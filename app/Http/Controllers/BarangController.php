@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Barang;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\StokExport;
 
 class BarangController extends Controller
 {
@@ -122,5 +124,8 @@ public function storeJual(Request $request)
         return response()->json($data);
     }
 
-
+public function exportExcel()
+{
+    return Excel::download(new StokExport, 'stok_barang.xlsx');
+}
 }

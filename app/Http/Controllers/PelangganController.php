@@ -8,8 +8,11 @@ use App\Models\Salesman;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use App\Exports\PelangganExport;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Support\Facades\Validator;
 class PelangganController extends Controller
+
 {
     public function index()
     {
@@ -187,6 +190,29 @@ public function import(Request $request)
     return redirect()->route('pelanggan.index')
         ->with('error', 'Gagal membuka file CSV.');
 }
+ public function searchBySales(Request $request)
+    {
+        $kodeSales = $request->input('kode_sales'); // Ambil kode_sales dari permintaan
+        $cari = $request->input('q'); // (opsional) Kata kunci pencarian dari Select2
 
+        // Bangun query pelanggan
+        $query = Pelanggan::query();
+        if ($kodeSales) {
+            $query->where('kode_sales', $kodeSales);
+        }
+        if ($cari) {
+            $query->where('nama_pelanggan', 'LIKE', "%{$cari}%");
+        }
+
+        $hasil = $query->take(50) // batasi jumlah hasil jika perlu
+                      ->get(['id', 'nama_pelanggan AS name']); // ambil kolom id dan name
+
+        // Kembalikan sebagai JSON
+        return response()->json($hasil);
+    }
+    public function exportExcel()
+{
+    return Excel::download(new PelangganExport, 'export_master_pelanggan.xlsx');
+}
 }
 

@@ -314,11 +314,11 @@
 
             // 1) Jika totalKotor ≥ 1.000.000 → disc1 = 2%; jika > 500.000 → disc1 = 1%; selain itu = 0%
             let newDisc1 = 0;
-            if (totalKotor >= 1000000) {
-                newDisc1 = 2;
-            } else if (totalKotor > 500000) {
-                newDisc1 = 1;
-            }
+            // if (totalKotor >= 1000000) {
+            //     newDisc1 = 0;
+            // } else if (totalKotor > 500000) {
+            //     newDisc1 = 0;
+            // }
 
             // 2) Jika kode_barang = “21132689” dan total dus (dari semua baris) > 3 → disc2 = 10%, dll
             //    (di contoh ini, kita hanya menetapkan disc2=10% jika kodeBar === “21132689”)
