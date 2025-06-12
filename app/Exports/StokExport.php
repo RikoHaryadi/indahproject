@@ -20,32 +20,40 @@ class StokExport implements FromCollection, WithHeadings, WithMapping, WithEvent
         return Barang::where('stok', '>', 0)->get();
     }
 
-    public function map($data): array
-    {
-        $stok_dus = $data->isidus > 0 ? floor($data->stok / $data->isidus) : 0;
-        $stok_sisa_pcs = $data->isidus > 0 ? $data->stok % $data->isidus : $data->stok;
-        $stok_lsn = floor($stok_sisa_pcs / 12);
-        $stok_pcs = $stok_sisa_pcs % 12;
+   public function map($data): array
+{
+    $stok_dus = ($data->isidus > 0) ? floor($data->stok / $data->isidus) : 0;
+    $stok_sisa_pcs = ($data->isidus > 0) ? $data->stok % $data->isidus : $data->stok;
+    $stok_lsn = floor($stok_sisa_pcs / 12);
+    $stok_pcs = $stok_sisa_pcs % 12;
 
-        $harga_jual = $data->stok * $data->nilairp;
-        $harga_beli = $data->stok * $data->harga;
+    // Pastikan tidak ada nilai kosong
+    $stok_dus = $stok_dus ?: 0;
+    $stok_lsn = $stok_lsn ?: 0;
+    $stok_pcs = $stok_pcs ?: 0;
+    // (string) $stok_dus ?: '0';
+    // (string) $stok_lsn ?: '0';
+    // (string) $stok_pcs ?: '0';
 
-        $this->totalJual += $harga_jual;
-        $this->totalBeli += $harga_beli;
-        $this->rowCount++;
+    $harga_jual = $data->stok * $data->nilairp;
+    $harga_beli = $data->stok * $data->harga;
 
-        return [
-            $this->rowCount,
-            $data->kode_barang,
-            $data->nama_barang,
-            $data->isidus,
-            $stok_dus,
-            $stok_lsn,
-            $stok_pcs,
-            number_format($harga_jual, 2),
-            number_format($harga_beli, 2),
-        ];
-    }
+    $this->totalJual += $harga_jual;
+    $this->totalBeli += $harga_beli;
+    $this->rowCount++;
+
+    return [
+    $this->rowCount,
+    $data->kode_barang,
+    $data->nama_barang,
+    (int) $data->isidus,
+    (int) $stok_dus,
+    (int) $stok_lsn,
+    (int) $stok_pcs,
+    number_format($harga_jual, 2),
+    number_format($harga_beli, 2),
+    ];
+}
 
     public function headings(): array
     {
@@ -62,47 +70,59 @@ class StokExport implements FromCollection, WithHeadings, WithMapping, WithEvent
         ];
     }
 
-    public function registerEvents(): array
-    {
-        return [
-            AfterSheet::class => function (AfterSheet $event) {
-                $sheet = $event->sheet;
-                $lastDataRow = $this->rowCount + 1; // +1 karena header di baris 1
-                $lastRow = $lastDataRow + 1;
+ public function registerEvents(): array
+{
+    return [
+        AfterSheet::class => function (AfterSheet $event) {
+            $sheet = $event->sheet;
+            $lastDataRow = $this->rowCount + 1; // karena header di baris 1
+            $totalRow = $lastDataRow + 1;
 
-                // Tambahkan baris total
-                $sheet->appendRows([
-                    [
-                        '', '', '', '', '', '', 'Total:',
-                        number_format($this->totalJual, 2),
-                        number_format($this->totalBeli, 2),
-                    ]
-                ], $sheet);
+            // Tulis label Total di kolom D
+            $sheet->setCellValue("D$totalRow", 'Total:');
 
-                // Styling header (baris 1)
-                $sheet->getStyle('A1:I1')->applyFromArray([
-                    'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
-                    'fill' => [
-                        'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
-                        'startColor' => ['rgb' => '4CAF50'] // warna hijau
-                    ],
-                    'borders' => [
-                        'allBorders' => [
-                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                        ],
-                    ],
-                    'alignment' => ['horizontal' => 'center'],
-                ]);
+            // Isi total stok dus, lusin, pcs, harga jual & beli
+            $sheet->setCellValue("E$totalRow", $this->totalStokDus);
+            $sheet->setCellValue("F$totalRow", $this->totalStokLusin);
+            $sheet->setCellValue("G$totalRow", $this->totalStokPcs);
+            $sheet->setCellValue("H$totalRow", $this->totalJual);
+            $sheet->setCellValue("I$totalRow", $this->totalBeli);
 
-                // Border untuk seluruh tabel data + total
-                $sheet->getStyle("A1:I$lastRow")->applyFromArray([
-                    'borders' => [
-                        'allBorders' => [
-                            'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
-                        ],
+            // Format angka (harga jual & beli)
+            $sheet->getStyle("H2:I$totalRow")
+                ->getNumberFormat()
+                ->setFormatCode('#,##0.00');
+
+            // Styling header
+            $sheet->getStyle('A1:I1')->applyFromArray([
+                'font' => ['bold' => true, 'color' => ['rgb' => 'FFFFFF']],
+                'fill' => [
+                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => '4CAF50']
+                ],
+                'alignment' => ['horizontal' => 'center'],
+            ]);
+
+            // Border seluruh area
+            $sheet->getStyle("A1:I$totalRow")->applyFromArray([
+                'borders' => [
+                    'allBorders' => [
+                        'borderStyle' => \PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN,
                     ],
-                ]);
-            },
-        ];
-    }
+                ],
+            ]);
+
+            // Styling baris total
+            $sheet->getStyle("A$totalRow:I$totalRow")->applyFromArray([
+                'font' => ['bold' => true],
+                'fill' => [
+                    'fillType' => \PhpOffice\PhpSpreadsheet\Style\Fill::FILL_SOLID,
+                    'startColor' => ['rgb' => 'FFF9C4'] // kuning muda
+                ],
+                'alignment' => ['horizontal' => 'right'],
+            ]);
+        },
+    ];
+}
+
 }

@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\URL;    // ← Import URL Facade
 use Illuminate\Http\Request;           // ← (opsional, kalau kamu pakai Request di sini)
 
@@ -31,5 +32,6 @@ class AppServiceProvider extends ServiceProvider
         ) {
             URL::forceScheme('https');
         }
+         Paginator::useBootstrap(); // Tambahkan baris ini
     }
 }

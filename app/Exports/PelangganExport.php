@@ -9,8 +9,10 @@ use Maatwebsite\Excel\Concerns\WithStyles;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use Maatwebsite\Excel\Concerns\ShouldAutoSize;
+use PhpOffice\PhpSpreadsheet\Style\NumberFormat;
+use Maatwebsite\Excel\Concerns\WithColumnFormatting;
 
-class PelangganExport implements FromCollection, WithHeadings, WithMapping, WithStyles, ShouldAutoSize
+class PelangganExport implements FromCollection, WithHeadings, WithMapping, WithStyles, ShouldAutoSize, WithColumnFormatting
 {
     private $rowNumber = 0;
 
@@ -25,7 +27,7 @@ class PelangganExport implements FromCollection, WithHeadings, WithMapping, With
 
         return [
             $this->rowNumber,
-            $pelanggan->Kode_pelanggan,
+           "'" . $pelanggan->Kode_pelanggan,
             $pelanggan->Nama_pelanggan,
             $pelanggan->alamat,
             $pelanggan->telepon,
@@ -69,5 +71,11 @@ class PelangganExport implements FromCollection, WithHeadings, WithMapping, With
 
         $lastRow = $this->rowNumber + 1;
         $sheet->getStyle("A1:I{$lastRow}")->getBorders()->getAllBorders()->setBorderStyle(\PhpOffice\PhpSpreadsheet\Style\Border::BORDER_THIN);
+    }
+     public function columnFormats(): array
+    {
+        return [
+            'B' => NumberFormat::FORMAT_TEXT, // Kolom B untuk 'Kode Pelanggan'
+        ];
     }
 }

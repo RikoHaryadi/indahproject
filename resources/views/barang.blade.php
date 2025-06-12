@@ -68,8 +68,9 @@
             </tr>
         </tfoot>
     </table>
+    
 </div>
-
+{{ $barangList->links() }}
 
 <script>
     function calculateChange() {
@@ -79,4 +80,42 @@
         document.getElementById('nilairp').value = nilairp;
     }
 </script>
+<style>
+    .pagination {
+        display: flex;
+        justify-content: center;
+        list-style: none;
+        padding-left: 0;
+    }
+
+    .pagination li {
+        display: inline-block;
+        margin: 0 3px;
+    }
+
+    .pagination li a,
+    .pagination li span {
+        font-size: 14px !important;
+        padding: 6px 12px;
+        color: #007bff;
+        text-decoration: none;
+        border: 1px solid #dee2e6;
+        border-radius: 4px;
+        background-color: white;
+    }
+
+    .pagination li.active span {
+        background-color: #007bff;
+        color: white;
+        border-color: #007bff;
+    }
+
+    .pagination li.disabled span {
+        color: #6c757d;
+        background-color: #e9ecef;
+        border-color: #dee2e6;
+    }
+</style>
+
+
 @endsection

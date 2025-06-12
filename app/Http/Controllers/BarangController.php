@@ -10,16 +10,17 @@ use App\Exports\StokExport;
 class BarangController extends Controller
 {
     public function index()
-    {
-        $barangList = Barang::all();
+{
+    // Ambil hanya stok > 0, dan batasi hasil per halaman
+    $barangList = Barang::where('stok', '>', 0)->paginate(100); // tampil 100 item per halaman
 
-        // Menghitung total nilai Rp (harga * stok)
-        $totalNilaiStok = $barangList->sum(function ($barang) {
-            return $barang->nilairp * $barang->stok;
-        });
+    // Hitung total nilai stok hanya untuk yang ditampilkan
+    $totalNilaiStok = $barangList->sum(function ($barang) {
+        return $barang->nilairp * $barang->stok;
+    });
 
-        return view('barang', compact('barangList', 'totalNilaiStok'));
-    }
+    return view('barang', compact('barangList', 'totalNilaiStok'));
+}
     public function store(Request $request)
     {
         // Validasi input
