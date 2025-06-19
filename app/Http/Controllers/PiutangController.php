@@ -11,6 +11,9 @@ use App\Models\Piutang;
 use App\Models\Dt;
 use App\Models\Dtt;
 use App\Models\Salesman;
+use Illuminate\Support\Facades\DB;
+use Carbon\Carbon; // pastikan sudah di-import di atas
+
 
 class PiutangController extends Controller
 {
@@ -37,7 +40,7 @@ class PiutangController extends Controller
 
     public function index()
     {
-        $dt = Dt::with('details')->get();
+        $dt = Dt::with('ddt')->get();
         $penjualanList = Penjualan::all();
         $piutangList = Piutang::where('sisapiutang', '>', 0)->get();
         $salesmanList = Salesman::all();
@@ -62,6 +65,20 @@ class PiutangController extends Controller
             'items.*.bayar' => 'required|numeric',
             'items.*.sisapiutang' => 'required|numeric',
         ]);
+            // ✅ Validasi faktur sudah pernah masuk dan belum diproses
+    foreach ($request->items as $item) {
+        $idFaktur = $item['id_faktur'];
+
+        $exists = DB::table('ddt')
+            ->join('dt', 'ddt.dt_id', '=', 'dt.id')
+            ->where('ddt.id_faktur', $idFaktur)
+            ->where('dt.is_updated', false)
+            ->exists();
+
+        if ($exists) {
+            return back()->withErrors(['Faktur ' . $idFaktur . ' sudah masuk daftar tagihan sebelumnya dan belum diproses.'])->withInput();
+        }
+    }
 
         // Simpan data ke tabel dt
         $dt = Dt::create([
@@ -91,10 +108,10 @@ class PiutangController extends Controller
         return redirect()->route('dt.index')->with('success', 'Daftar Tagihan disimpan dengan No ID: ' . $dt->id);
     }
     public function cetak($id)
-{
-    $dt = Dt::with('details')->findOrFail($id);
-    return view('dt.cetak', compact('dt'));
-}
+    {
+        $dt = Dt::with('details')->findOrFail($id);
+        return view('dt.cetak', compact('dt'));
+    }
 
 public function update(Request $request, $id)
 {
@@ -153,35 +170,7 @@ public function update(Request $request, $id)
 
 
 
-public function edit($id)
-{
-    $dt = Dt::with('details')->find($id);
-    $piutangList =Piutang::all();
-
-    if (!$dt) {
-        return redirect()->route('dt.cari_edit')
-                         ->with('error', 'Data dengan ID ' . $id . ' tidak ditemukan.');
-    }
-
-    // Jika dt sudah diupdate sebelumnya, Anda bisa memberikan perlakuan khusus (misalnya mencegah edit)
-    if ($dt->is_updated) {
-        return redirect()->route('dt.index')
-                         ->with('error', 'Pembayaran untuk ID ' . $id . ' sudah diperbarui dan tidak dapat diedit lagi.');
-    }
-
-    // Perbarui nilai sisapiutang di setiap detail berdasarkan data di table piutang
-    foreach ($dt->details as $detail) {
-        $piutang = \App\Models\Piutang::where('id_faktur', $detail->id_faktur)->first();
-        if ($piutang && $piutang->sisapiutang == 0) {
-            // Override nilai sisa piutang agar tampil 0 pada form edit
-            $detail->sisapiutang = $piutang->sisapiutang;
-            // Jika perlu, Anda juga bisa mengatur nilai pembayaran (misalnya supaya input bayar jadi readonly)
-            $detail->bayar = $piutang->bayar;
-        }
-    }
-
-    return view('dt.edit', compact('dt', 'piutangList'));
-}
+// 
 
 
 public function showCariEdit(Request $request)
@@ -210,23 +199,129 @@ public function showCariEdit(Request $request)
 }
 public function indexPiutang(Request $request)
 {
-    $query = Piutang::query();
+   $query = Piutang::query()->where('sisapiutang', '>', 0);
 
-     // Filter berdasarkan kode pelanggan
     if ($request->filled('kode_pelanggan')) {
         $query->where('kode_pelanggan', $request->kode_pelanggan);
     }
 
+    $piutangList = $query->get();
+
+    // Ambil semua pelanggan, jadikan koleksi indexed by kode_pelanggan
+    $pelangganMap = Pelanggan::all()->keyBy('Kode_pelanggan');
+
+    // Filter berdasarkan jatuh tempo
     if ($request->filled('jatuh_tempo')) {
         $tanggalFilter = Carbon::parse($request->jatuh_tempo);
         $query->whereHas('pelanggan', function ($q) use ($tanggalFilter) {
-            $q->whereRaw('DATE_ADD(piutang.tanggal, INTERVAL pelanggan.top DAY) <= ?', [$tanggalFilter->toDateString()]);
+            $q->whereRaw('DATE_ADD(piutang.created_at, INTERVAL pelanggan.top DAY) <= ?', [$tanggalFilter->toDateString()]);
         });
     }
 
-    $piutangList = $query->orderBy('created_at')->get();
-    $pelangganList = Pelanggan::orderBy('nama_pelanggan')->get();
+    // Ambil semua data pembayaran terlebih dahulu
+    $pembayaranList = Pembayaran::all();
 
+      foreach ($piutangList as $piutang) {
+        $top = $pelangganMap[$piutang->kode_pelanggan]->top ?? 0;
+
+        $piutang->jatuhTempo = Carbon::parse($piutang->created_at)
+                                ->addDays($top)
+                                ->format('d-m-Y');
+    }
+
+    $pelangganList = Pelanggan::all();
+
+   
     return view('piutang.index', compact('piutangList', 'pelangganList'));
 }
+public function checkFakturExists(Request $request)
+{
+    $idFaktur = $request->input('id_faktur');
+
+    // Cek apakah sudah pernah masuk ke dt yang belum diupdate
+    $exists = DB::table('ddt')
+        ->join('dt', 'ddt.dt_id', '=', 'dt.id')
+        ->where('ddt.id_faktur', $idFaktur)
+        ->where('dt.is_updated', 0)
+        ->exists();
+
+    return response()->json(['exists' => $exists]);
+}
+ public function daftar(Request $request)
+{
+      $dt = Dt::with('ddt')->get(); // gunakan eager loading
+    //  
+
+  
+
+    return view('dt.daftardt', compact('dt'));
+}
+
+public function edit($id)
+{
+    // dd(Dtt::where('dt_id', $id)->get());
+   $dt = Dt::with('ddt')->findOrFail($id);
+    $salesmanList = Salesman::all();
+    $piutangList = Piutang::where('sisapiutang', '>', 0)->get();
+
+    return view('dt.edit', compact('dt', 'salesmanList', 'piutangList'));
+}
+public function updatedt(Request $request, $id)
+{
+   $data = $request->validate([
+        'id_colector' => 'required',
+        'colector' => 'required',
+        'totaldt' => 'required',
+        'items' => 'required|array',
+        'items.*.id_faktur' => 'required',
+        'items.*.kode_pelanggan' => 'required',
+        'items.*.nama_pelanggan' => 'required',
+        'items.*.top' => 'required|integer',
+        'items.*.total' => 'required|numeric',
+        'items.*.bayar' => 'required|numeric',
+        'items.*.sisapiutang' => 'required|numeric',
+    ]);
+
+     // Update header-nya dulu
+    $dt = Dt::findOrFail($id);
+    $dt->id_colector = $request->id_colector;
+    $dt->colector = $request->colector;
+    $dt->totaldt = $request->totaldt;
+    $dt->save();
+
+    // Hapus detail lama
+   $existingDetails = Dtt::where('dt_id', $id)->pluck('id_faktur')->toArray();
+
+$submittedFakturs = collect($request->items)->pluck('id_faktur')->toArray();
+
+// Hapus faktur yang tidak ada lagi dalam request
+Dtt::where('dt_id', $id)
+    ->whereNotIn('id_faktur', $submittedFakturs)
+    ->delete();
+
+// Simpan atau update data item
+foreach ($request->items as $item) {
+    Dtt::updateOrCreate(
+        ['dt_id' => $id, 'id_faktur' => $item['id_faktur']], // kunci unik
+        [
+            'kode_pelanggan' => $item['kode_pelanggan'],
+            'nama_pelanggan' => $item['nama_pelanggan'],
+            'top' => $item['top'],
+            'total' => $item['total'],
+            'bayar' => $item['bayar'],
+            'sisapiutang' => $item['sisapiutang'],
+        ]
+    );
+}
+
+    return redirect()->route('dt.index')->with('success', 'Data DT berhasil diperbarui.');
+}
+    public function destroy($id)
+    {
+    $dt = Dt::findOrFail($id);
+        $dt->details()->delete();
+        $dt->delete();
+
+        return redirect()->route('dt.index')->with('success', 'Data berhasil dihapus.');
+    }
 }

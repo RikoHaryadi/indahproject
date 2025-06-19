@@ -74,7 +74,7 @@
             <input type="text" id="totaldt" name="totaldt" class="form-control" readonly>
         </div>
         <button type="submit" class="btn btn-success mt-3" name="action" value="save">Simpan</button>
-        <button type="submit" class="btn btn-secondary mt-3" name="action" value="save_and_print">Simpan & Cetak</button>
+        <!-- <button type="submit" class="btn btn-secondary mt-3" name="action" value="save_and_print">Simpan & Cetak</button> -->
     
 </div>
 @endsection
@@ -85,6 +85,30 @@
 <script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
 
 <script>
+//     document.addEventListener('DOMContentLoaded', function () {
+//     // Selector tergantung input faktur yang digunakan (ubah jika perlu)
+//    $(document).on('select2:select', '.select-faktur', function (e) {
+//     const input = $(this);
+//     const idFaktur = e.params.data.id;
+//         if (!idFaktur) return;
+
+//         $.ajax({
+//             url: '{{ url("/check-faktur-exists") }}',
+//             type: 'GET',
+//             data: { id_faktur: idFaktur },
+//             success: function (response) {
+//                 if (response.exists) {
+//                     alert('Faktur ' + idFaktur + ' sudah masuk ke daftar tagihan sebelumnya dan belum diproses!');
+//                     input.val(''); // kosongkan input
+//                     input.focus();
+//                 }
+//             },
+//             error: function () {
+//                 alert('Terjadi kesalahan saat memeriksa faktur.');
+//             }
+//         });
+//     });
+// });
     // Fungsi untuk update detail Collector
     function updateColectorDetails(selectElement) {
     const selectedOption = selectElement.options[selectElement.selectedIndex];
@@ -192,6 +216,42 @@
 
             // Inisialisasi Select2 pada dropdown yang baru saja ditambahkan
             initializeSelect2($('#items-body tr:last'));
+    function initializeSelect2(row) {
+    row.find('.select-faktur').select2();
+
+    row.find('.select-faktur').on('select2:select', function (e) {
+        const selectedOption = $(this).find('option:selected');
+        const idFaktur = selectedOption.val();
+        const selectEl = $(this);
+
+        if (!idFaktur) return;
+
+        // Cek ke server apakah faktur ini sudah masuk dan belum diproses
+        $.get('/check-faktur-exists', { id_faktur: idFaktur }, function (response) {
+            if (response.exists) {
+                alert('❌ Faktur ' + idFaktur + ' sudah masuk daftar tagihan sebelumnya dan belum diproses!');
+                // Reset nilai dropdown
+                selectEl.val(null).trigger('change');
+                // Kosongkan input lainnya di baris ini
+                const parentRow = selectEl.closest('tr');
+                parentRow.find('.kode_pelanggan, .nama_pelanggan, .total_faktur, .pembayaran, .sisapiutang').val('');
+                return;
+            }
+
+            // Jika tidak ada masalah, isi data dari atribut option
+            const row = selectEl.closest('tr');
+            row.find('.kode_pelanggan').val(selectedOption.data('kode_pelanggan'));
+            row.find('.nama_pelanggan').val(selectedOption.data('nama_pelanggan'));
+            row.find('.total_faktur').val(selectedOption.data('total'));
+            row.find('.pembayaran').val(0);
+            row.find('.sisapiutang').val(selectedOption.data('sisapiutang'));
+
+            updateTotalKeseluruhan();
+        }).fail(function () {
+            alert('⚠️ Terjadi kesalahan saat memeriksa faktur.');
+        });
+    });
+}
         });
 
         // Menghapus baris item dan mengupdate total

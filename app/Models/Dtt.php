@@ -11,6 +11,7 @@ class Dtt extends Model
     protected $table = 'ddt';
     // public $timestamps = false; // Nonaktifkan timestamps
     protected $fillable = [
+         'dt_id', // WAJIB ditambahkan
         'id_faktur',
         'kode_pelanggan',
         'nama_pelanggan',

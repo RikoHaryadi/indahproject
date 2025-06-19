@@ -6,18 +6,20 @@ use Illuminate\Http\Request;
 use App\Models\Barang;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\StokExport;
+ini_set('max_execution_time', 300); // 5 menit
 
 class BarangController extends Controller
 {
+    
     public function index()
 {
     // Ambil hanya stok > 0, dan batasi hasil per halaman
     $barangList = Barang::where('stok', '>', 0)->paginate(100); // tampil 100 item per halaman
 
     // Hitung total nilai stok hanya untuk yang ditampilkan
-    $totalNilaiStok = $barangList->sum(function ($barang) {
-        return $barang->nilairp * $barang->stok;
-    });
+$totalNilaiStok = Barang::where('stok', '>', 0)
+    ->selectRaw('SUM(nilairp * stok) as total')
+    ->value('total');
 
     return view('barang', compact('barangList', 'totalNilaiStok'));
 }

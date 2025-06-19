@@ -342,6 +342,33 @@ public function show($poId)
 }
 
 
+public function destroy($id)
+    {
+        $penjualan = Penjualan::findOrFail($id);
+
+        // Validasi jika sudah ada pembayaran
+        $piutang = Piutang::where('id_faktur', $penjualan->id_faktur)->first();
+        if ($piutang && $piutang->pembayaran > 0) {
+            return back()->with('error', 'Faktur tidak bisa dibatalkan karena sudah ada pembayaran.');
+        }
+
+        // Ambil semua detail item
+        $details = PenjualanDetail::where('penjualan_id', $penjualan->id)->get();
+
+        foreach ($details as $item) {
+            // Kembalikan stok
+            Barang::where('kode_barang', $item->kode_barang)
+                  ->increment('stok', $item->quantity);
+        }
+
+        // Hapus detail, piutang, dan header penjualan
+        PenjualanDetail::where('penjualan_id', $penjualan->id)->delete();
+        Piutang::where('id_faktur', $penjualan->id_faktur)->delete();
+        $penjualan->delete();
+
+        return redirect()->route('penjualan.daftarjual')
+                         ->with('success', 'Faktur berhasil dibatalkan dan stok dikembalikan.');
+    }
 
 
 }

@@ -14,6 +14,9 @@ class StokExport implements FromCollection, WithHeadings, WithMapping, WithEvent
     protected $totalJual = 0;
     protected $totalBeli = 0;
     protected $rowCount = 0;
+    protected $totalStokDus = 0;
+    protected $totalStokLusin = 0;
+    protected $totalStokPcs = 0;
 
     public function collection()
     {
@@ -34,6 +37,9 @@ class StokExport implements FromCollection, WithHeadings, WithMapping, WithEvent
     // (string) $stok_dus ?: '0';
     // (string) $stok_lsn ?: '0';
     // (string) $stok_pcs ?: '0';
+    $this->totalStokDus += $stok_dus;
+    $this->totalStokLusin += $stok_lsn;
+    $this->totalStokPcs += $stok_pcs;
 
     $harga_jual = $data->stok * $data->nilairp;
     $harga_beli = $data->stok * $data->harga;
@@ -47,9 +53,12 @@ class StokExport implements FromCollection, WithHeadings, WithMapping, WithEvent
     $data->kode_barang,
     $data->nama_barang,
     (int) $data->isidus,
-    (int) $stok_dus,
-    (int) $stok_lsn,
-    (int) $stok_pcs,
+     number_format($stok_dus, 2),
+      number_format($stok_lsn, 2),
+       number_format($stok_pcs, 2),
+    // (int) $stok_dus,
+    // (int) $stok_lsn,
+    // (int) $stok_pcs,
     number_format($harga_jual, 2),
     number_format($harga_beli, 2),
     ];

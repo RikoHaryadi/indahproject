@@ -109,8 +109,8 @@
                         {{ $detail->nama_pelanggan }}
                     </td>
                     <td>
-                    <input type="hidden" class="total_faktur" name="details[{{ $index }}][total_faktur]" value="{{ $detail->total }}">
-                        {{ number_format($detail->total, 2) }}
+                    <input type="hidden" class="total_faktur" name="details[{{ $index }}][total_faktur]" value="{{ $detail->sisapiutang }}">
+                        {{ number_format($detail->sisapiutang, 2) }}
                     </td>
                     <td>
                         <input type="number" class="bayar form-control" name="details[{{ $index }}][bayar]" 

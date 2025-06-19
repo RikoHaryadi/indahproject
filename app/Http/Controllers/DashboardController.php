@@ -40,7 +40,7 @@ class DashboardController extends Controller
     
     // Total piutang (sisa_piutang di table pembayaran)
     $penjualantotal = Penjualan::sum('total');
-    $totalPiutang = Penjualan::sum('total');
+    $totalPiutang = Piutang::sum('sisapiutang');
     //Total hutang (ambil dari table grn)
     $totalHutang = Grn::sum('total');
 

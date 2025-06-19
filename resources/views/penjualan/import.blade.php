@@ -7,6 +7,7 @@
   @if(session('success'))
     <div class="alert alert-success">{{ session('success') }}</div>
   @endif
+ 
   @if ($errors->any())
     <div class="alert alert-danger">
         <ul>
@@ -16,7 +17,14 @@
         </ul>
     </div>
 @endif
-
+<!-- <form method="POST" action="{{ route('penjualan.import.preview') }}" enctype="multipart/form-data">
+    @csrf
+    <div class="mb-3">
+        <label for="csv_file" class="form-label">File CSV</label>
+        <input type="file" class="form-control" name="csv_file" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Preview</button>
+</form> -->
   <form action="{{ route('penjualan.import') }}" method="POST" enctype="multipart/form-data">
     @csrf
     <div class="mb-3">

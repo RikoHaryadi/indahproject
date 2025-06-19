@@ -20,18 +20,12 @@ class PenjualanImportController extends Controller
 
     private function parseNumber(string $s): float
     {
-         // Hapus spasi
-    $s = trim($s);
-
-    // Cek apakah string mengandung koma (,) sebagai desimal
-    if (strpos($s, ',') !== false && strpos($s, '.') === false) {
-        // Format Eropa: ribuan pakai titik, desimal pakai koma (misal: 21.642,78)
-        $s = str_replace('.', '', $s); // hapus titik ribuan
-        $s = str_replace(',', '.', $s); // ubah koma desimal jadi titik
-    }
-
-    // Jika format sudah benar (misal 21642.78), biarkan
-    return floatval($s);
+        $s = trim($s);
+        if (strpos($s, ',') !== false && strpos($s, '.') === false) {
+            $s = str_replace('.', '', $s);
+            $s = str_replace(',', '.', $s);
+        }
+        return floatval($s);
     }
 
     public function importCsv(Request $request)
@@ -42,143 +36,139 @@ class PenjualanImportController extends Controller
 
         $path = $request->file('csv_file')->getRealPath();
         $lines = file($path);
-
-        // deteksi delimiter
         $firstLine = $lines[0] ?? '';
         $delimiter = substr_count($firstLine, ';') > substr_count($firstLine, ',') ? ';' : ',';
 
         $handle = fopen($path, 'r');
         $header = fgetcsv($handle, 0, $delimiter);
-
-        // baca semua baris ke dalam array asosiatif
         $rows = [];
-        while ($row = fgetcsv($handle, 0, $delimiter)) {
-            if (count($row) === count($header)) {
-                $rows[] = array_combine($header, $row);
+        $barisKe = 2;
+        $errors = [];
+
+        $requiredFields = ['INVNumber', 'INVDate', 'SKUCode', 'ProductName', 'HARGA/DUS', 'DUS', 'LSN', 'PCS', 'TotalQuantity(PCS)', 'Discount', 'GROSS', 'DISCX', 'PPN', 'Net', 'Outlet', 'Outlet Name', 'Salesman', 'SalesmaneNama'];
+
+        while (($row = fgetcsv($handle, 0, $delimiter)) !== false) {
+            if (count($row) !== count($header)) {
+                $errors[] = "Baris ke-$barisKe: Jumlah kolom tidak sesuai.";
+                $barisKe++;
+                continue;
             }
+            $assoc = array_combine($header, $row);
+            $missingFields = [];
+            foreach ($requiredFields as $field) {
+                if (!isset($assoc[$field]) || trim($assoc[$field]) === '') {
+                    $missingFields[] = $field;
+                }
+            }
+            if (!empty($missingFields)) {
+                $errors[] = "Baris ke-$barisKe: Kolom kosong: " . implode(', ', $missingFields);
+                $barisKe++;
+                continue;
+            }
+            $rows[] = $assoc;
+            $barisKe++;
         }
         fclose($handle);
 
-        // group by INVNumber
-        $grouped = collect($rows)->groupBy('INVNumber');
+        if (!empty($errors)) {
+            return redirect()->route('penjualan.import.form')->withErrors($errors);
+        }
 
-        // ----- VALIDASI MASTER PELANGGAN DAN MASTER BARANG -----
+        $grouped = collect($rows)->groupBy('INVNumber');
         $missingPelanggan = [];
-        $missingBarang    = [];
+        $missingBarang = [];
 
         foreach ($grouped as $inv => $items) {
-            // Cek master Pelanggan berdasarkan kolom 'Outlet' di baris pertama
             $firstRow = $items->first();
             $kodePelangganCsv = trim($firstRow['Outlet'] ?? '');
-
-            if (! Pelanggan::where('kode_pelanggan', $kodePelangganCsv)->exists()) {
+            if (!Pelanggan::where('kode_pelanggan', $kodePelangganCsv)->exists()) {
                 $missingPelanggan[] = $kodePelangganCsv;
             }
-
-            // Cek setiap baris item, kode_barang ("SKUCode")
             foreach ($items as $i) {
                 $kodeBarangCsv = trim($i['SKUCode'] ?? '');
-
-                if (! Barang::where('kode_barang', $kodeBarangCsv)->exists()) {
+                if (!Barang::where('kode_barang', $kodeBarangCsv)->exists()) {
                     $missingBarang[] = $kodeBarangCsv;
                 }
             }
         }
 
-        // Hilangkan duplikasi dan kosongkan string
         $missingPelanggan = array_filter(array_unique($missingPelanggan));
-        $missingBarang    = array_filter(array_unique($missingBarang));
+        $missingBarang = array_filter(array_unique($missingBarang));
 
-        // Kalau ada yang tidak ketemu di master, hentikan dan kembalikan error
         if (count($missingPelanggan) > 0 || count($missingBarang) > 0) {
             $messages = [];
-
             if (count($missingPelanggan) > 0) {
-                $messages[] = 'Kode Pelanggan berikut tidak ditemukan di master: ' 
-                              . implode(', ', $missingPelanggan) . '.';
+                $messages[] = 'Kode Pelanggan berikut tidak ditemukan: ' . implode(', ', $missingPelanggan);
             }
             if (count($missingBarang) > 0) {
-                $messages[] = 'Kode Barang berikut tidak ditemukan di master: ' 
-                              . implode(', ', $missingBarang) . '.';
+                $messages[] = 'Kode Barang berikut tidak ditemukan: ' . implode(', ', $missingBarang);
             }
-
-            // Kembalikan ke halaman import dengan pesan error
-            return redirect()
-                    ->back()
-                    ->withErrors($messages)
-                    ->withInput();
+            return redirect()->back()->withErrors($messages)->withInput();
         }
 
-        // ----- PROSES IMPORT JIKA SEMUA VALID =====
-        DB::transaction(function() use ($grouped) {
+        DB::transaction(function () use ($grouped) {
             foreach ($grouped as $inv => $items) {
-                // ambil baris pertama sebagai sumber header
                 $first = $items->first();
                 $tgl = Carbon::createFromFormat('d/m/Y', $first['INVDate'])->format('Y-m-d');
+                $sumGross = $items->sum(fn ($i) => $this->parseNumber($i['GROSS']));
+                $sumDisc = $items->sum(fn ($i) => $this->parseNumber($i['DISCX']));
+                $sumPpn = $items->sum(fn ($i) => $this->parseNumber($i['PPN']));
+                $sumNet = $items->sum(fn ($i) => $this->parseNumber($i['Net']));
 
-                // hitung total per faktur
-                $sumGross = $items->sum(fn($i) => $this->parseNumber($i['GROSS']));
-                $sumDisc  = $items->sum(fn($i) => $this->parseNumber($i['DISCX']));
-                $sumPpn   = $items->sum(fn($i) => $this->parseNumber($i['PPN']));
-                $sumNet   = $items->sum(fn($i) => $this->parseNumber($i['Net']));
-
-                // simpan penjualan (header)
                 $pj = Penjualan::create([
-                    'id_faktur'      => $inv,
-                    'kode_sales'     => $first['Salesman'],
-                    'nama_sales'     => $first['SalesmaneNama'],
+                    'id_faktur' => $inv,
+                    'kode_sales' => $first['Salesman'],
+                    'nama_sales' => $first['SalesmaneNama'],
                     'kode_pelanggan' => $first['Outlet'],
                     'nama_pelanggan' => $first['Outlet Name'],
                     'total_discount' => $sumDisc,
-                    'total'          => $sumNet,
-                    'created_at'     => $tgl,
+                    'total' => $sumNet,
+                    'created_at' => $tgl,
+                    'updated_at' => now(),
                 ]);
-                  Piutang::create([
-                    'id_faktur'      => $inv,
+
+                Piutang::create([
+                    'id_faktur' => $inv,
                     'kode_pelanggan' => $first['Outlet'],
                     'nama_pelanggan' => $first['Outlet Name'],
-                    'total'          => $sumNet,
-                    'pembayaran'     => 0,
-                    'sisapiutang'     => $sumNet,
-                    'created_at'     => $tgl,
+                    'total' => $sumNet,
+                    'pembayaran' => 0,
+                    'sisapiutang' => $sumNet,
+                    'created_at' => $tgl,
+                    'updated_at' => now(),
                 ]);
 
-                // simpan detail
                 foreach ($items as $i) {
-                    // Ambil master Barang untuk mendapatkan isidus jika diperlukan
                     $barang = Barang::where('kode_barang', $i['SKUCode'])->first();
                     $masterIsidus = $barang ? intval($barang->isidus) : 1;
-
-                    $qty   = intval($i['TotalQuantity(PCS)']); // total dalam PCS
+                    $qty = intval($i['TotalQuantity(PCS)']);
                     $disc1 = $this->parseNumber($i['Discount']);
-                    $net   = $this->parseNumber($i['Net']);
+                    $net = $this->parseNumber($i['Net']);
 
                     PenjualanDetail::create([
                         'penjualan_id' => $pj->id,
-                        'kode_barang'  => $i['SKUCode'],
-                        'nama_barang'  => $i['ProductName'],
-                        'harga'        => $this->parseNumber($i['HARGA/DUS']),
-                        'dus'          => intval($i['DUS']),
-                        'lusin'        => intval($i['LSN']),
-                        'pcs'          => intval($i['PCS']),
-                        'isidus'       => $masterIsidus,
-                        'quantity'     => $qty,
-                        'disc1'        => 0,
-                        'disc2'        => 0,
-                        'disc3'        => 0,
-                        'disc4'        => $disc1,
-                        'jumlah'       => $net,
-                        'created_at'   => now(),
+                        'kode_barang' => $i['SKUCode'],
+                        'nama_barang' => $i['ProductName'],
+                        'harga' => $this->parseNumber($i['HARGA/DUS']),
+                        'dus' => intval($i['DUS']),
+                        'lusin' => intval($i['LSN']),
+                        'pcs' => intval($i['PCS']),
+                        'isidus' => $masterIsidus,
+                        'quantity' => $qty,
+                        'disc1' => 0,
+                        'disc2' => 0,
+                        'disc3' => 0,
+                        'disc4' => $disc1,
+                        'jumlah' => $net,
+                        'created_at' => $tgl,
+                        'updated_at' => now(),
                     ]);
 
-                    // Kurangi stok (boleh minus)
-                    Barang::where('kode_barang', $i['SKUCode'])
-                        ->decrement('stok', $qty);
+                    $barang->decrement('stok', $qty);
                 }
             }
         });
 
         return back()->with('success', 'Import CSV berhasil!');
     }
-
 }

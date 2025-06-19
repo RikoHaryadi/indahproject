@@ -31,7 +31,7 @@
 
     {{-- Tabel Penjualan --}}
     <table class="table table-bordered table-hover table-striped">
-        <thead class="table-dark">
+        <thead class="table-dark" style="font-size: 12px;">
         
             <tr>
                 <th>ID</th>
@@ -61,18 +61,33 @@
                 <td>{{ $item->kode_pelanggan }}</td>
                 <td>{{ $item->nama_pelanggan }}</td>
                 <td>{{ number_format($item->total, 2) }}</td>
-                    <td class="text-center">
-                        <!-- Tombol Cetak (jika Anda punya) -->
-                        <a href="{{ route('penjualan.cetak', $item->id) }}"
-                           class="btn btn-secondary btn-sm" target="_blank">
-                            Cetak
-                        </a>
-                        <!-- Tombol Edit -->
-                        <a href="{{ route('penjualan.edit', $item->id) }}"
-                           class="btn btn-primary btn-sm">
-                            Edit
-                        </a>
-                    </td>
+                <td class="text-center">
+                    <!-- Tombol Cetak -->
+                    <a href="{{ route('penjualan.cetak', $item->id) }}"
+                    class="btn btn-outline-dark btn-sm"
+                    data-bs-toggle="tooltip" data-bs-placement="top" title="Cetak Faktur"
+                    target="_blank">
+                        <i class="fas fa-print"></i>
+                    </a>
+
+                    <!-- Tombol Edit -->
+                    <a href="{{ route('penjualan.edit', $item->id) }}"
+                    class="btn btn-outline-success btn-sm"
+                    data-bs-toggle="tooltip" data-bs-placement="top" title="Edit Faktur">
+                        <i class="fas fa-pen"></i>
+                    </a>
+
+                    <!-- Tombol Batalkan -->
+                    <form action="{{ route('penjualan.destroy', $item->id) }}" method="POST" style="display:inline;">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-outline-danger btn-sm"
+                                onclick="return confirm('Yakin ingin membatalkan faktur ini?')"
+                                data-bs-toggle="tooltip" data-bs-placement="top" title="Batalkan Faktur">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                </td>
             </tr>
             @php $totalOmset += $item->total; @endphp
             @endforeach
@@ -86,4 +101,15 @@
         </tfoot>
     </table>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+            new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    });
+</script>
+<style>
+
+</style>
 @endsection

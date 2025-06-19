@@ -45,10 +45,7 @@
 
 @forelse($piutangList as $index => $p)
     @php
-        $jatuhTempo = $p->pelanggan && $p->pelanggan->top
-        ? \Carbon\Carbon::parse($p->created_at)->addDays($p->pelanggan->top)->format('d-m-Y')
-        : '-';
-
+       
         $grandTotal += $p->sisapiutang;
     @endphp
 
@@ -56,11 +53,11 @@
         <td>{{ $index + 1 }}</td>
         <td>{{ $p->id_faktur }}</td>
         <td>{{ \Carbon\Carbon::parse($p->created_at)->format('d-m-Y') }}</td>
-        <td>{{ $jatuhTempo }}</td>
+       <td>{{ $p->jatuhTempo }}</td>
         <td>{{ $p->kode_pelanggan }}</td>
         <td>{{ $p->nama_pelanggan }}</td>
-        <td class="text-end">{{ number_format($p->total, 2) }}</td>
-        <td class="text-end">{{ number_format($p->pembayaran, 2) }}</td>
+       <td class="text-end">{{ number_format($p->total, 2) }}</td>
+        <td class="text-end">{{ number_format($p->total_pembayaran, 2) }}</td>
         <td class="text-end">{{ number_format($p->sisapiutang, 2) }}</td>
     </tr>
 @empty

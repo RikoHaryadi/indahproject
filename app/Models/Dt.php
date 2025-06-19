@@ -14,13 +14,13 @@ class Dt extends Model
         'id_colector',
         'colector',
         'totaldt',
+        'is_updated',
         
     ];
 
     // Relasi dengan Biayaresume
-    public function details()
-    {
-        // Gunakan 'id' sebagai local key jika primary key-nya 'id'
-        return $this->hasMany(Dtt::class, 'dt_id', 'id');
-    }
+   public function ddt()
+{
+    return $this->hasMany(Dtt::class, 'dt_id', 'id');
+}
 }

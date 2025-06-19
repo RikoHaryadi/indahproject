@@ -21,6 +21,7 @@ use App\Http\Controllers\MultiplepoController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PiutangController;
 use App\Http\Controllers\ReturController;
+use App\Http\Controllers\PenjualanImportController;
 
 /*
 |--------------------------------------------------------------------------
@@ -77,7 +78,8 @@ Route::middleware('no.cache')->group(function(){
                Route::get('/stok/export', [BarangController::class, 'exportExcel'])->name('stok.export');
 
                Route::get('/barang',    [BarangController::class,'index'])->name('barang.index');
-     
+     Route::delete('/penjualan/{id}', [PenjualanController::class, 'destroy'])->name('penjualan.destroy');
+
      Route::get('/penjualan',               [PenjualanController::class,'index'])->name('penjualan.index');
      Route::post('/penjualan',              [PenjualanController::class,'store'])->name('penjualan.store');
      Route::get('/penjualan/daftarso',      [PoController::class,'daftar'])->name('penjualan.daftarso');
@@ -145,17 +147,26 @@ Route::middleware('no.cache')->group(function(){
      Route::get('/biaya/cetak-pdf/{kode}',   [BiayaController::class,'cetakPdf'])->name('biaya.cetak-pdf');
 
      // Piutang Testing
+     Route::get('/dt/{id}/cetak', [PiutangController::class, 'cetak'])->name('dt.cetak');
+     Route::get('/dt/{id}/edit', [PiutangController::class, 'edit'])->name('dt.edit');
+     Route::put('/dt/{id}', [PiutangController::class, 'updatedt'])->name('dt.update');
+     Route::delete('/dt/{id}', [PiutangController::class, 'destroy'])->name('dt.destroy');
+
+      Route::get('/dt/daftar',        [PiutangController::class,'daftar'])->name('dt.daftardt');
+     Route::get('/check-faktur-exists', [PiutangController::class, 'checkFakturExists'])->name('check.faktur.exists');
      Route::get('/dt',                       [PiutangController::class,'index'])->name('dt.index');
      Route::post('/dt',                      [PiutangController::class,'store'])->name('dt.store');
-     Route::get('/dt/edit/{id}',             [PiutangController::class,'edit'])->name('dt.edit');
-     Route::put('/dt/update/{id}',           [PiutangController::class,'update'])->name('dt.update');
+  
      Route::get('/dt/cari-edit',             [PiutangController::class,'showCariEdit'])->name('dt.cari_edit');
        Route::get('/datapiutang',             [PiutangController::class,'indexPiutang'])->name('piutang.index');
      // tampilkan form import
-Route::get('/penjualan/import', [App\Http\Controllers\PenjualanImportController::class, 'showForm'])
+     Route::post('/penjualan/import-preview', [PenjualanImportController::class, 'preview'])->name('penjualan.import.preview');
+     Route::post('/penjualan/import-do', [PenjualanImportController::class, 'importCsv'])->name('penjualan.import.do');
+
+     Route::get('/penjualan/import', [App\Http\Controllers\PenjualanImportController::class, 'showForm'])
      ->name('penjualan.import.form');
 // proses upload
-Route::post('/penjualan/import', [App\Http\Controllers\PenjualanImportController::class, 'importCsv'])
+     Route::post('/penjualan/import', [App\Http\Controllers\PenjualanImportController::class, 'importCsv'])
      ->name('penjualan.import');
 // Edit form (GET)
 Route::get('/penjualan/{id}/edit', [PenjualanController::class, 'edit'])

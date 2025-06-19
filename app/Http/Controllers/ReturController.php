@@ -119,7 +119,8 @@ $quantityRetur = $returDus * $isidus + $returLusin * 12 + $returPcs;
 // Hitung total retur sebelumnya dari semua retur yang mengacu ke faktur ini
 $returSebelumnya = ReturDetail::where('kode_barang', $detailAsli->kode_barang)
     ->whereHas('retur', function ($query) use ($penj) {
-        $query->where('id_faktur', $penj->id_faktur);
+        $query->where('id_faktur', $penj->id_faktur)
+              ->where('status', '!=', 'dibatalkan');
     })
     ->sum('quantityretur');
 

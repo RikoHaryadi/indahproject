@@ -49,15 +49,29 @@
                     @endif
                 </td>
                 <td>
-                    <a href="{{ route('retur.cetak', $retur->id) }}" target="_blank" class="btn btn-sm btn-primary">Cetak</a>
-
+                  
+                    <a href="{{ route('retur.cetak', $retur->id) }}"
+                    class="btn btn-outline-dark btn-sm"
+                    data-bs-toggle="tooltip" data-bs-placement="top" title="Cetak Faktur"
+                    target="_blank">
+                        <i class="fas fa-print"></i>
+                    </a>
                     @if ($retur->status != 'dibatalkan')
-                        <form action="{{ route('retur.batalkan', $retur->id) }}" method="POST" style="display:inline-block" onsubmit="return confirm('Yakin ingin membatalkan retur ini?')">
-                            @csrf
-                            <button type="submit" class="btn btn-sm btn-danger">Cancel</button>
-                        </form>
+                    <form action="{{ route('retur.batalkan', $retur->id) }}" method="POST" style="display:inline;" onsubmit="return confirm('Yakin ingin membatalkan retur ini?')">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="btn btn-outline-danger btn-sm"
+                               
+                                data-bs-toggle="tooltip" data-bs-placement="top" title="Batalkan Retur">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </form>
+                       
                     @else
-                        <button class="btn btn-sm btn-secondary" disabled>Cancelled</button>
+                     <button class="btn btn-outline-danger btn-sm"
+                            data-bs-toggle="tooltip" disabled data-bs-placement="top" title="Canceled">
+                          <i class="fas fa-trash"></i>
+                          </button>
                     @endif
                 </td>
             </tr>
@@ -79,4 +93,12 @@
         font-size: 12px;
     }
 </style>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        tooltipTriggerList.forEach(function (tooltipTriggerEl) {
+            new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    });
+</script>
 @endsection
