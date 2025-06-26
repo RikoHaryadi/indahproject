@@ -63,7 +63,7 @@
     <!-- Jika semua detail sudah lunas, tampilkan pesan -->
     @php
         $allLunas = true;
-        foreach ($dt->details as $detail) {
+        foreach ($dt->ddt as $detail) {
             if ($detail->sisapiutang > 0) {
                 $allLunas = false;
                 break;
@@ -93,7 +93,7 @@
                 </tr>
             </thead>
             <tbody>
-                @foreach($dt->details as $index => $detail)
+                @foreach($dt->ddt as $index => $detail)
                 <tr>
                     <td>
                         <input type="hidden" name="details[{{ $index }}][id]" value="{{ $detail->id }}">

@@ -46,9 +46,9 @@
         </thead>
         <tbody>
             @php $totalOmset = 0; @endphp
-            @foreach ($penjualan as $item)
+           @foreach ($penjualan as $index => $item)
             <tr>
-                <td>{{ $item->id }}</td>
+                <td>{{ $penjualan->firstItem() + $index }}</td>
                 <td>{{ $item->id_faktur}}</td>
                 <td>{{ \Carbon\Carbon::parse($item->created_at)->format('d-m-Y') }}</td>
                 <td>
@@ -100,6 +100,9 @@
             </tr>
         </tfoot>
     </table>
+    <div class="mt-3">
+    {{ $penjualan->withQueryString()->links() }}
+</div>
 </div>
 <script>
     document.addEventListener('DOMContentLoaded', function () {

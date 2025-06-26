@@ -30,6 +30,7 @@ class PenjualanImportController extends Controller
 
     public function importCsv(Request $request)
     {
+        ini_set('max_execution_time', 300);
         $request->validate([
             'csv_file' => 'required|mimes:csv,txt'
         ]);

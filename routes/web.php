@@ -21,6 +21,7 @@ use App\Http\Controllers\MultiplepoController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\PiutangController;
 use App\Http\Controllers\ReturController;
+use App\Http\Controllers\DtController;
 use App\Http\Controllers\PenjualanImportController;
 
 /*
@@ -147,10 +148,11 @@ Route::middleware('no.cache')->group(function(){
      Route::get('/biaya/cetak-pdf/{kode}',   [BiayaController::class,'cetakPdf'])->name('biaya.cetak-pdf');
 
      // Piutang Testing
-     Route::get('/dt/{id}/cetak', [PiutangController::class, 'cetak'])->name('dt.cetak');
-     Route::get('/dt/{id}/edit', [PiutangController::class, 'edit'])->name('dt.edit');
-     Route::put('/dt/{id}', [PiutangController::class, 'updatedt'])->name('dt.update');
-     Route::delete('/dt/{id}', [PiutangController::class, 'destroy'])->name('dt.destroy');
+     Route::get('/dt/{id}/cetak', [DtController::class, 'cetak'])->name('dt.cetak');
+     Route::get('/dt/{id}/edit', [DtController::class, 'edit'])->name('dt.edit');
+     Route::put('/dt/{id}', [DtController::class, 'updatedt'])->name('dt.update');
+     Route::delete('/dt/{id}', [DtController::class, 'destroy'])->name('dt.destroy');
+     Route::put('/dt/{id}', [PiutangController::class, 'update'])->name('dt.update');
 
       Route::get('/dt/daftar',        [PiutangController::class,'daftar'])->name('dt.daftardt');
      Route::get('/check-faktur-exists', [PiutangController::class, 'checkFakturExists'])->name('check.faktur.exists');

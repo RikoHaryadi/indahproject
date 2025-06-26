@@ -153,6 +153,7 @@ class PenjualanController extends Controller
     // }
     public function daftar(Request $request)
 {
+    ini_set('max_execution_time', 300);
     $query = Penjualan::query();
 
     // Filter berdasarkan tanggal
@@ -168,7 +169,7 @@ class PenjualanController extends Controller
         $query->where('kode_pelanggan', $request->kode_pelanggan);
     }
 
-    $penjualan = $query->orderBy('created_at', 'desc')->get();
+    $penjualan = $query->with('pelanggan')->orderBy('created_at', 'desc')->paginate(50);
 
     return view('penjualan.daftarjual', compact('penjualan'));
 }

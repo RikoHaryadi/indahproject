@@ -5,7 +5,8 @@
     <h1>Nota Pembelian</h1>
     <p>Kode Supplier: {{ $grn->kode_suplier }}</p>
     <p>Nama Supplier: {{ $grn->nama_suplier }}</p>
-    <p>Tanggal: {{ $grn->created_at->format('d-m-Y H:i:s') }}</p>
+    <p>No shipment: {{ $grn->noinvoice }}</p>
+    <p>Tanggal: {{ $grn->created_at }}</p>
 
     <table class="table">
         <thead>

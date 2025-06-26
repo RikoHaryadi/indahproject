@@ -70,13 +70,13 @@ class ReturController extends Controller
         Log::info('Masuk ke proses retur!');
         $kodeBarangError = null;
 
-        $request->validate([
-            'penjualan_id'      => 'required|exists:penjualan,id',
-            'items'             => 'required|array',
+            $request->validate([
+            'penjualan_id' => 'required|exists:penjualan,id',
+            'items' => 'required|array',
             'items.*.detail_id' => 'required|exists:penjualan_detail,id',
-            'items.*.retur_dus'   => 'required|integer|min:0',
-            'items.*.retur_lusin' => 'required|integer|min:0',
-            'items.*.retur_pcs'   => 'required|integer|min:0',
+            'items.*.retur_dus' => 'nullable|integer|min:0',
+            'items.*.retur_lusin' => 'nullable|integer|min:0',
+            'items.*.retur_pcs' => 'nullable|integer|min:0',
         ]);
 
         try {
@@ -103,9 +103,9 @@ class ReturController extends Controller
                     $detailAsli = PenjualanDetail::find($item['detail_id']);
                     if (! $detailAsli) continue;
 
-                    $returDus   = intval($item['retur_dus']);
-                    $returLusin = intval($item['retur_lusin']);
-                    $returPcs   = intval($item['retur_pcs']);
+                    $returDus   = intval($item['retur_dus'] ?? 0);
+                    $returLusin = intval($item['retur_lusin'] ?? 0);
+                    $returPcs   = intval($item['retur_pcs'] ?? 0);
 
                  $isidus = optional($detailAsli->barang)->isidus ?? 1;
 

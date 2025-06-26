@@ -57,7 +57,7 @@
         <td>{{ $p->kode_pelanggan }}</td>
         <td>{{ $p->nama_pelanggan }}</td>
        <td class="text-end">{{ number_format($p->total, 2) }}</td>
-        <td class="text-end">{{ number_format($p->total_pembayaran, 2) }}</td>
+        <td class="text-end">{{ number_format($p->pembayaran, 2) }}</td>
         <td class="text-end">{{ number_format($p->sisapiutang, 2) }}</td>
     </tr>
 @empty

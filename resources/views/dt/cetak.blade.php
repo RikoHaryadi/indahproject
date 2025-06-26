@@ -17,7 +17,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach ($dt->details as $detail)
+            @foreach ($dt->ddt as $detail)
             <tr>
                 <td>{{ $detail->id_faktur }}</td>
                 <td>{{ $detail->nama_pelanggan }}</td>
